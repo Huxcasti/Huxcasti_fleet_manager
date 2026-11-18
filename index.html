@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1e31">
+<title>Huxcasti Fleet Manager — Demo</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#193049;background:#f2f5f9}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #9be0cb}
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}.side{background:#102237;color:white;padding:22px 14px;display:flex;flex-direction:column}.brand{font-size:20px;font-weight:800;padding:6px 10px 28px}.brand span{background:#22b987;border-radius:9px;color:#102237;padding:7px 11px;margin-right:8px}.brand small{display:block;margin:13px 0 0 46px;color:#9cb4c6;font-size:11px;letter-spacing:1px}.tabs{display:grid;gap:8px}.tab{padding:13px;border:0;border-radius:11px;text-align:left;color:#becddd;background:transparent;font-weight:700}.tab.active,.tab:hover{background:#294158;color:white}.sidenote{margin-top:auto;color:#a9bacb;font-size:12px;padding:20px 10px;line-height:1.5}
+main{max-width:1220px;padding:28px;width:100%;margin:auto}.header{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:25px}.label{font-size:12px;letter-spacing:1px;color:#10936c;font-weight:900;text-transform:uppercase}h1{font-size:29px;margin:5px 0 7px}h2{font-size:19px;margin:0 0 17px}.muted{color:#6a7c8f;font-size:14px}.pill{background:#e8f8f1;color:#087750;border-radius:50px;padding:6px 10px;font-size:12px;font-weight:800}.warn{background:#fff2d7;color:#945d00}.danger{background:#ffe5e5;color:#a83d3d}.demo{background:#fff0cc;color:#7d5109;border:1px solid #ecd49d;border-radius:8px;padding:8px 11px;font-size:12px;font-weight:800;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}.stat,.panel{background:#fff;border:1px solid #e3eaf0;border-radius:15px;padding:20px;box-shadow:0 3px 16px #21354a09}.stat label{color:#61758a;font-size:12px;font-weight:700}.stat b{display:block;font-size:28px;margin-top:9px}.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:17px}.panel{margin-bottom:17px}.vehicle,.entry{display:flex;justify-content:space-between;gap:13px;align-items:center;padding:13px 0;border-bottom:1px solid #e9edf3}.vehicle:last-child,.entry:last-child{border-bottom:0}.vehicle strong,.entry strong{display:block}.vehicle p,.entry p{margin:4px 0 0;color:#66788b;font-size:12px}.end{text-align:right}form{display:grid;gap:13px}label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}input,select{width:100%;background:white;border:1px solid #cedbe6;border-radius:9px;padding:11px;color:#152b40}.fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.btn{border:0;border-radius:10px;padding:10px 15px;background:#07946c;color:white;font-weight:800}.btn:hover{background:#087653}.btn.secondary{background:#edf4f7;color:#174354}.btnrow{display:flex;flex-wrap:wrap;gap:8px}.note{background:#edf7fc;border-radius:10px;padding:12px;font-size:13px;color:#365e70;line-height:1.6;margin:14px 0}.note.warning{background:#fff5df;color:#72541c}.page[hidden]{display:none!important}a.shop{display:inline-block;padding:11px 13px;border-radius:9px;background:#e9f7f0;border:1px solid #cde8d8;color:#0a7652;text-decoration:none;font-weight:800;margin:7px 7px 0 0;font-size:13px}footer{color:#8491a2;font-size:12px;margin:24px 0 0}
+@media(max-width:850px){.shell{grid-template-columns:1fr}.side{padding:13px}.brand{padding:7px}.brand small{display:none}.tabs{display:flex;overflow:auto}.tab{white-space:nowrap}.sidenote{display:none}.cols{grid-template-columns:1fr}main{padding:18px}}
+@media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}.stat{padding:14px}.panel{padding:16px}.fields{grid-template-columns:1fr}.header{flex-direction:column}h1{font-size:24px}.vehicle{align-items:flex-start}.demo{align-self:start}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side">
+<div class="brand"><span>H</span> Huxcasti <small>FLEET MANAGER</small></div>
+<nav class="tabs" aria-label="Secciones">
+<button type="button" class="tab active" data-page="flota">🚐 Flota</button>
+<button type="button" class="tab" data-page="averias">🛠 Averías</button>
+<button type="button" class="tab" data-page="repuestos">🔎 Repuestos</button>
+<button type="button" class="tab" data-page="gastos">💵 Gastos</button>
+</nav>
+<div class="sidenote">Prototipo independiente de Amazon, Hera y Wilx.<br>Solo con información ficticia.</div>
+</aside>
+<main>
+<header class="header"><div><div class="label">Panel de flotas</div><h1 id="pageTitle">Resumen de la flota</h1><div class="muted">Mantenimiento, averías, piezas y gastos en un mismo lugar.</div></div><span class="demo">DEMO — Datos ficticios</span></header>
+<section class="page" id="page-flota">
+<div class="stats" id="stats"></div>
+<div class="cols">
+<div class="panel"><h2>Mis vehículos</h2><div id="vehicleList"></div></div>
+<div class="panel"><h2>Alertas de mantenimiento</h2><div class="note warning">Aviso cuando faltan 500 millas o menos para el aceite, según el millaje registrado.</div><div id="alerts"></div></div>
+</div>
+<div class="panel"><h2>Actualizar mantenimiento</h2>
+<form id="maintenanceForm"><div class="fields">
+<div><label for="maintVehicle">Vehículo</label><select id="maintVehicle" required></select></div>
+<div><label for="miles">Millaje actual</label><input id="miles" type="number" min="0" step="1" required></div>
+<div><label for="due">Próximo aceite (millas)</label><input id="due" type="number" min="0" step="1" required></div>
+<div><label for="interval">Intervalo de aceite (millas)</label><input id="interval" type="number" min="1" step="1" required></div>
+</div><div class="btnrow"><button class="btn" type="submit">Guardar millaje</button><button class="btn secondary" type="button" id="oilChanged">Registrar cambio de aceite</button></div></form>
+</div>
+</section>
+<section class="page" id="page-averias" hidden><div class="cols">
+<div class="panel"><h2>Registrar avería</h2><form id="damageForm">
+<div><label for="damageVehicle">Guagua</label><select id="damageVehicle" required></select></div>
+<div><label for="damagePart">Pieza dañada</label><input id="damagePart" placeholder="Ej.: Alternador" required maxlength="100"></div>
+<div><label for="damageDetails">Notas</label><input id="damageDetails" placeholder="Detalles del problema" maxlength="250"></div>
+<button type="submit" class="btn">Guardar reporte</button></form></div>
+<div class="panel"><h2>Reportes de averías</h2><div id="damages"></div></div></div></section>
+<section class="page" id="page-repuestos" hidden>
+<div class="panel"><h2>Buscador de repuestos</h2><p class="muted">Busca piezas para un vehículo específico. Abre las tiendas para comparar precios y confirmar compatibilidad.</p>
+<form id="partsForm"><div class="fields"><div><label for="partVehicle">Vehículo</label><select id="partVehicle" required></select></div><div><label for="partName">Pieza o número de parte</label><input id="partName" placeholder="Ej.: Alternador" required maxlength="100"></div></div><button class="btn" type="submit">Buscar piezas</button></form><div id="partsResults" aria-live="polite"></div>
+<div class="note warning">Estos botones abren búsquedas, no precios en vivo. Confirma VIN, año, motor y número de parte con el vendedor antes de comprar.</div></div>
+</section>
+<section class="page" id="page-gastos" hidden><div class="cols">
+<div class="panel"><h2>Registrar gasto</h2><form id="expenseForm">
+<div><label for="expenseVehicle">Guagua</label><select id="expenseVehicle" required></select></div>
+<div><label for="expenseType">Categoría</label><select id="expenseType"><option>Mantenimiento</option><option>Repuesto</option><option>Alquiler</option><option>Otros</option></select></div>
+<div><label for="expenseCost">Cantidad en dólares</label><input id="expenseCost" type="number" min="0.01" step="0.01" required></div>
+<div><label for="expenseDetails">Descripción</label><input id="expenseDetails" maxlength="150" required placeholder="Ej.: Cambio de filtros"></div>
+<button class="btn" type="submit">Guardar gasto</button></form></div>
+<div class="panel"><h2>Historial de gastos</h2><div id="totalCosts" class="note"></div><div id="costEntries"></div></div></div></section>
+<footer>Huxcasti Fleet Manager · Demostración sin autenticación ni almacenamiento en servidor. No utilizar con información real de la flota. <button class="btn secondary" type="button" id="resetDemo">Reiniciar demo</button></footer>
+</main></div>
+<script>
+(()=>{
+"use strict";
+const key="huxcasti-fleet-demo-1";
+const initial={
+  vehicles:[
+  {id:"F-101",name:"Ford Transit",year:2022,engine:"3.5L",miles:49550,due:50000,interval:5000,condition:"Disponible"},
+  {id:"F-102",name:"Ram ProMaster",year:2021,engine:"3.6L",miles:42200,due:45000,interval:5000,condition:"Disponible"},
+  {id:"F-103",name:"Mercedes Sprinter",year:2020,engine:"2.0L",miles:61020,due:61000,interval:7500,condition:"En reparación"},
+  {id:"F-104",name:"Ford Transit",year:2023,engine:"3.5L",miles:30500,due:35000,interval:5000,condition:"Disponible"},
+  {id:"F-105",name:"Ram ProMaster",year:2022,engine:"3.6L",miles:67200,due:67500,interval:5000,condition:"Disponible"}],
+  damages:[{id:1,vehicle:"F-103",part:"Alternador",details:"Pendiente de diagnóstico",date:"Ejemplo"}],
+  expenses:[{id:1,vehicle:"F-103",type:"Repuesto",cost:125,details:"Gasto de demostración",date:"Ejemplo"}]
+};
+const copy=obj=>JSON.parse(JSON.stringify(obj));
+let data=copy(initial);
+try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&Array.isArray(saved.vehicles)&&Array.isArray(saved.damages)&&Array.isArray(saved.expenses))data=saved}catch{}
+const $=id=>document.getElementById(id);
+const escaped=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dollar=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
+const commas=n=>Number(n).toLocaleString("en-US");
+const getV=id=>data.vehicles.find(v=>v.id===id);
+const left=v=>v.due-v.miles;
+const save=()=>{try{localStorage.setItem(key,JSON.stringify(data))}catch{alert("No fue posible guardar los datos en este navegador.")}};
+function options(){["maintVehicle","damageVehicle","partVehicle","expenseVehicle"].forEach(id=>{
+const s=$(id),old=s.value;s.replaceChildren();
+data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.id+" · "+v.name+" "+v.year;s.append(o)});
+if(getV(old))s.value=old;
+})}
+function maintenanceValues(){const v=getV($("maintVehicle").value);if(v){$("miles").value=v.miles;$("due").value=v.due;$("interval").value=v.interval}}
+function renderFlota(){
+const vehicles=data.vehicles,late=vehicles.filter(v=>left(v)<=500),available=vehicles.filter(v=>v.condition==="Disponible").length;
+$("stats").innerHTML=[["Guaguas",vehicles.length],["Disponibles",available],["En reparación",vehicles.length-available],["Aceite próximo",late.length]].map(([t,n])=>'<div class="stat"><label>'+t+'</label><b>'+n+'</b></div>').join("");
+$("vehicleList").innerHTML=vehicles.map(v=>'<div class="vehicle"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong><p>'+v.year+' · '+commas(v.miles)+' millas · '+escaped(v.condition)+'</p></div><div class="end"><span class="pill '+(left(v)<0?"danger":left(v)<=500?"warn":"")+'">'+(left(v)<0?"Vencido":left(v)<=500?"Próximo":"Al día")+'</span><p>Aceite: '+commas(v.due)+' mi</p><button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">Editar</button></div></div>').join("");
+$("alerts").innerHTML=late.length?late.sort((a,b)=>left(a)-left(b)).map(v=>'<div class="entry"><div><strong>'+escaped(v.id)+'</strong><p>'+escaped(v.name)+'</p></div><span class="pill '+(left(v)<0?"danger":"warn")+'">'+(left(v)<0?commas(-left(v))+" mi vencidas":commas(left(v))+" mi restantes")+'</span></div>').join(""):'<p class="muted">Sin alertas pendientes.</p>';
+}
+function renderDamages(){$("damages").innerHTML=data.damages.length?data.damages.slice().reverse().map(d=>'<div class="entry"><div><strong>'+escaped(d.vehicle)+' · '+escaped(d.part)+'</strong><p>'+escaped(d.details)+'</p></div><span class="pill warn">Pendiente</span></div>').join(""):'<p class="muted">Sin averías registradas.</p>'}
+function renderExpenses(){$("totalCosts").textContent="Total registrado: "+dollar(data.expenses.reduce((s,x)=>s+Number(x.cost),0));$("costEntries").innerHTML=data.expenses.length?data.expenses.slice().reverse().map(x=>'<div class="entry"><div><strong>'+escaped(x.vehicle)+' · '+escaped(x.type)+'</strong><p>'+escaped(x.details)+'</p></div><strong>'+dollar(x.cost)+'</strong></div>').join(""):'<p class="muted">Sin gastos registrados.</p>'}
+function render(){options();maintenanceValues();renderFlota();renderDamages();renderExpenses()}
+document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
+document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",tab===t));
+document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+tab.dataset.page);
+$("pageTitle").textContent=({flota:"Resumen de la flota",averias:"Reportes de averías",repuestos:"Búsqueda de repuestos",gastos:"Control de gastos"})[tab.dataset.page];
+}));
+$("maintVehicle").addEventListener("change",maintenanceValues);
+$("vehicleList").addEventListener("click",e=>{const b=e.target.closest("[data-vehicle]");if(b){$("maintVehicle").value=b.dataset.vehicle;maintenanceValues();$("miles").focus()}});
+$("maintenanceForm").addEventListener("submit",e=>{e.preventDefault();const v=getV($("maintVehicle").value);if(!v)return;
+const miles=Number($("miles").value),due=Number($("due").value),interval=Number($("interval").value);
+if(![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)return alert("Verifica los valores del millaje.");
+Object.assign(v,{miles,due,interval});save();render();alert("Millaje guardado en la demostración.")});
+$("oilChanged").addEventListener("click",()=>{const v=getV($("maintVehicle").value);if(!v)return;
+const miles=Number($("miles").value),interval=Number($("interval").value);
+if(!Number.isSafeInteger(miles)||miles<0||!Number.isSafeInteger(interval)||interval<1)return alert("Verifica el millaje y el intervalo.");
+if(!confirm("¿Registrar el cambio de aceite de "+v.id+" a las "+commas(miles)+" millas?"))return;
+v.miles=miles;v.interval=interval;v.due=miles+interval;save();render();alert("Nuevo cambio programado para "+commas(v.due)+" millas.")});
+$("damageForm").addEventListener("submit",e=>{e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
+data.damages.push({id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:new Date().toISOString().slice(0,10)});save();renderDamages();e.target.reset();alert("Avería registrada en la demo.")});
+$("partsForm").addEventListener("submit",e=>{e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
+const q=v.year+" "+v.name+" "+v.engine+" "+part;
+const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
+const target=$("partsResults");target.replaceChildren();const p=document.createElement("p");p.textContent="Búsquedas preparadas para "+q;target.append(p);
+urls.forEach(([name,url])=>{const a=document.createElement("a");a.className="shop";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Buscar en "+name+" ↗";target.append(a)})});
+$("expenseForm").addEventListener("submit",e=>{e.preventDefault();const cost=Number($("expenseCost").value),details=$("expenseDetails").value.trim();if(!Number.isFinite(cost)||cost<=0||!details)return;
+data.expenses.push({id:Date.now(),vehicle:$("expenseVehicle").value,type:$("expenseType").value,cost,details,date:new Date().toISOString().slice(0,10)});save();renderExpenses();e.target.reset();alert("Gasto registrado en la demo.")});
+$("resetDemo").addEventListener("click",()=>{if(confirm("¿Restaurar todos los datos ficticios?")){data=copy(initial);save();render();$("partsResults").replaceChildren()}});
+render();
+})();
+</script></body></html>
