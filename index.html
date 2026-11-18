@@ -11,6 +11,10 @@ main{max-width:1220px;padding:28px;width:100%;margin:auto}.header{display:flex;j
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}.stat,.panel{background:#fff;border:1px solid #e3eaf0;border-radius:15px;padding:20px;box-shadow:0 3px 16px #21354a09}.stat label{color:#61758a;font-size:12px;font-weight:700}.stat b{display:block;font-size:28px;margin-top:9px}.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:17px}.panel{margin-bottom:17px}.vehicle,.entry{display:flex;justify-content:space-between;gap:13px;align-items:center;padding:13px 0;border-bottom:1px solid #e9edf3}.vehicle:last-child,.entry:last-child{border-bottom:0}.vehicle strong,.entry strong{display:block}.vehicle p,.entry p{margin:4px 0 0;color:#66788b;font-size:12px}.end{text-align:right}form{display:grid;gap:13px}label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}input,select{width:100%;background:white;border:1px solid #cedbe6;border-radius:9px;padding:11px;color:#152b40}.fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.btn{border:0;border-radius:10px;padding:10px 15px;background:#07946c;color:white;font-weight:800}.btn:hover{background:#087653}.btn.secondary{background:#edf4f7;color:#174354}.btnrow{display:flex;flex-wrap:wrap;gap:8px}.note{background:#edf7fc;border-radius:10px;padding:12px;font-size:13px;color:#365e70;line-height:1.6;margin:14px 0}.note.warning{background:#fff5df;color:#72541c}.page[hidden]{display:none!important}a.shop{display:inline-block;padding:11px 13px;border-radius:9px;background:#e9f7f0;border:1px solid #cde8d8;color:#0a7652;text-decoration:none;font-weight:800;margin:7px 7px 0 0;font-size:13px}footer{color:#8491a2;font-size:12px;margin:24px 0 0}
 @media(max-width:850px){.shell{grid-template-columns:1fr}.side{padding:13px}.brand{padding:7px}.brand small{display:none}.tabs{display:flex;overflow:auto}.tab{white-space:nowrap}.sidenote{display:none}.cols{grid-template-columns:1fr}main{padding:18px}}
 @media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}.stat{padding:14px}.panel{padding:16px}.fields{grid-template-columns:1fr}.header{flex-direction:column}h1{font-size:24px}.vehicle{align-items:flex-start}.demo{align-self:start}}
+.damage-entry{flex-wrap:wrap}
+.damage-details{flex:1 1 12rem;min-width:0;overflow-wrap:anywhere}
+.damage-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.damage-actions .btn{font-size:13px;padding:8px 10px}
 </style>
 </head>
 <body>
@@ -87,7 +91,15 @@ const dollar=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"})
 const commas=n=>Number(n).toLocaleString("en-US");
 const getV=id=>data.vehicles.find(v=>v.id===id);
 const left=v=>v.due-v.miles;
-const save=()=>{try{localStorage.setItem(key,JSON.stringify(data))}catch{alert("No fue posible guardar los datos en este navegador.")}};
+const save = (state = data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+    return true;
+  } catch {
+    alert("No fue posible guardar los datos en este navegador.");
+    return false;
+  }
+};
 function options(){["maintVehicle","damageVehicle","partVehicle","expenseVehicle"].forEach(id=>{
 const s=$(id),old=s.value;s.replaceChildren();
 data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.id+" · "+v.name+" "+v.year;s.append(o)});
@@ -100,7 +112,29 @@ $("stats").innerHTML=[["Guaguas",vehicles.length],["Disponibles",available],["En
 $("vehicleList").innerHTML=vehicles.map(v=>'<div class="vehicle"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong><p>'+v.year+' · '+commas(v.miles)+' millas · '+escaped(v.condition)+'</p></div><div class="end"><span class="pill '+(left(v)<0?"danger":left(v)<=500?"warn":"")+'">'+(left(v)<0?"Vencido":left(v)<=500?"Próximo":"Al día")+'</span><p>Aceite: '+commas(v.due)+' mi</p><button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">Editar</button></div></div>').join("");
 $("alerts").innerHTML=late.length?late.sort((a,b)=>left(a)-left(b)).map(v=>'<div class="entry"><div><strong>'+escaped(v.id)+'</strong><p>'+escaped(v.name)+'</p></div><span class="pill '+(left(v)<0?"danger":"warn")+'">'+(left(v)<0?commas(-left(v))+" mi vencidas":commas(left(v))+" mi restantes")+'</span></div>').join(""):'<p class="muted">Sin alertas pendientes.</p>';
 }
-function renderDamages(){$("damages").innerHTML=data.damages.length?data.damages.slice().reverse().map(d=>'<div class="entry"><div><strong>'+escaped(d.vehicle)+' · '+escaped(d.part)+'</strong><p>'+escaped(d.details)+'</p></div><span class="pill warn">Pendiente</span></div>').join(""):'<p class="muted">Sin averías registradas.</p>'}
+function renderDamages() {
+  const list = $("damages");
+  if (!data.damages.length) {
+    list.innerHTML = '<p class="muted">Sin averías registradas.</p>';
+    return;
+  }
+
+  list.innerHTML = data.damages.map((damage, index) => {
+    const repaired = damage.repaired === true;
+    const vehicle = escaped(damage.vehicle);
+    const part = escaped(damage.part);
+    return `<div class="entry damage-entry">
+      <div class="damage-details">
+        <strong>${vehicle} · ${part}</strong>
+        <p>${escaped(damage.details)}</p>
+      </div>
+      <div class="damage-actions">
+        <span class="pill${repaired ? "" : " warn"}" id="damage-status-${index}" tabindex="-1">${repaired ? "Arreglado" : "Pendiente"}</span>
+        ${repaired ? "" : `<button class="btn secondary" type="button" data-repair-index="${index}" aria-label="Marcar como arreglado el reporte de ${part} de la guagua ${vehicle}">Marcar como arreglado</button>`}
+      </div>
+    </div>`;
+  }).reverse().join("");
+}
 function renderExpenses(){$("totalCosts").textContent="Total registrado: "+dollar(data.expenses.reduce((s,x)=>s+Number(x.cost),0));$("costEntries").innerHTML=data.expenses.length?data.expenses.slice().reverse().map(x=>'<div class="entry"><div><strong>'+escaped(x.vehicle)+' · '+escaped(x.type)+'</strong><p>'+escaped(x.details)+'</p></div><strong>'+dollar(x.cost)+'</strong></div>').join(""):'<p class="muted">Sin gastos registrados.</p>'}
 function render(){options();maintenanceValues();renderFlota();renderDamages();renderExpenses()}
 document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
@@ -121,6 +155,23 @@ if(!confirm("¿Registrar el cambio de aceite de "+v.id+" a las "+commas(miles)+"
 v.miles=miles;v.interval=interval;v.due=miles+interval;save();render();alert("Nuevo cambio programado para "+commas(v.due)+" millas.")});
 $("damageForm").addEventListener("submit",e=>{e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
 data.damages.push({id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:new Date().toISOString().slice(0,10)});save();renderDamages();e.target.reset();alert("Avería registrada en la demo.")});
+
+$("damages").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-repair-index]");
+  if (!button) return;
+
+  const index = Number(button.dataset.repairIndex);
+  const damage = data.damages[index];
+  if (!damage || damage.repaired === true) return;
+
+  const updated = { ...data, damages: data.damages.slice() };
+  updated.damages[index] = { ...damage, repaired: true };
+  if (!save(updated)) return;
+
+  data = updated;
+  renderDamages();
+  $("damage-status-" + index).focus();
+});
 $("partsForm").addEventListener("submit",e=>{e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
 const q=v.year+" "+v.name+" "+v.engine+" "+part;
 const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
