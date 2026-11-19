@@ -253,6 +253,9 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 .parts-register .form-actions{align-items:flex-end}
 .parts-register .form-actions>div{flex:1;min-width:180px}
 .parts-register .form-actions .btn{flex:none}
+#customSupplierField{margin-top:12px}
+#customSupplierField label{margin-bottom:7px}
+#customSupplierField input{background:#fff}
 .parts-compat{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border-radius:11px;background:#fff7e9;border:1px solid #e9d5b1;margin-top:16px}
 .parts-compat strong{display:block;font-size:13px;color:#704a13}
 .parts-compat p{margin:3px 0 0;line-height:1.5;font-size:12px;color:#765829}
@@ -346,6 +349,10 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
   <div class="form-actions">
    <div><label for="partSupplier" data-translate>Proveedor</label>
     <select id="partSupplier"><option value="Amazon">Amazon</option><option value="AutoZone">AutoZone</option><option value="O'Reilly">O'Reilly</option><option value="RockAuto">RockAuto</option><option value="Otra tienda" data-translate>Otra tienda</option></select>
+    <div id="customSupplierField" hidden>
+     <label for="customSupplierName" data-translate>Nombre de la tienda</label>
+     <input id="customSupplierName" type="text" maxlength="60" autocomplete="organization" placeholder="Ej.: NAPA Auto Parts" data-translate-placeholder>
+    </div>
    </div>
    <button class="btn" id="registerPartExpense" type="button" data-translate>Registrar compra en gastos</button>
   </div>
@@ -510,6 +517,9 @@ Object.assign(english, {
   "Selecciona dónde lo compraste. Pasaremos la pieza y el vehículo a Gastos para que añadas el precio real.": "Select where you bought it. We'll copy the part and vehicle to Expenses so you can enter the actual amount.",
   "Proveedor": "Supplier",
   "Otra tienda": "Other store",
+  "Nombre de la tienda": "Store name",
+  "Ej.: NAPA Auto Parts": "E.g. NAPA Auto Parts",
+  "Escribe el nombre de la tienda antes de registrar la compra.": "Enter the store name before recording the purchase.",
   "Registrar compra en gastos": "Log purchase in expenses",
   "Completa el precio real de la compra y luego presiona Guardar gasto.": "Enter the actual price paid, then select Save expense.",
   "Búsqueda lista": "Search ready",
@@ -909,13 +919,27 @@ $("partsForm").addEventListener("submit",e=>{
  if(vin&&!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin))return alert(translate("Introduce un VIN válido de 17 caracteres (sin I, O ni Q), o déjalo en blanco."));
  partsSearch={vehicleId:v.id,part,partNumber,vin};
  $("partSupplier").value="Amazon";
+ $("customSupplierName").value="";
+ syncCustomSupplier();
  renderPartsSearch();
  $("partsResults").scrollIntoView({behavior:"smooth",block:"nearest"});
 });
 ["input","change"].forEach(eventName=>$("partsForm").addEventListener(eventName,()=>{if(partsSearch)resetPartsSearch();}));
+function syncCustomSupplier(){
+ const other=$("partSupplier").value==="Otra tienda";
+ $("customSupplierField").hidden=!other;
+ $("customSupplierName").required=other;
+ if(!other)$("customSupplierName").value="";
+}
+$("partSupplier").addEventListener("change",()=>{
+ syncCustomSupplier();
+ if(!$("customSupplierField").hidden)$("customSupplierName").focus();
+});
 $("registerPartExpense").addEventListener("click",()=>{
  if(!partsSearch||!getV(partsSearch.vehicleId))return alert(translate("Busca una pieza antes de registrar una compra."));
- const supplier=$("partSupplier").value;
+ const custom=$("customSupplierName").value.trim();
+ const supplier=$("partSupplier").value==="Otra tienda" ? custom : $("partSupplier").value;
+ if(!supplier){$("customSupplierName").focus();return alert(translate("Escribe el nombre de la tienda antes de registrar la compra."));}
  const desc=[translate("Repuesto: {part}",{part:partsSearch.part}),partsSearch.partNumber?"#"+partsSearch.partNumber:"",supplier].filter(Boolean).join(" · ").slice(0,150);
  openPage("gastos");
  $("expenseVehicle").value=partsSearch.vehicleId;
@@ -940,6 +964,7 @@ $("resetDemo").addEventListener("click",()=>{
  selectedVehicleId=null;hideVehicleForm();resetPartsSearch();$("expenseSourceNote").hidden=true;renderFlota();
 });
 localizePage();
+syncCustomSupplier();
 render();
 })();
 </script></body></html>
