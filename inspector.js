@@ -75,7 +75,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./realvan.js?v=transit-lenses-arrow-20261119-v3");
+  const {mountVan3D}=await import("./realvan.js?v=transit-original-lights-v4");
   if(token!==loadToken)return;
   const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
@@ -102,8 +102,8 @@ async function open(id){
   viewer=loadedViewer;
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
-  const lightStatus=viewer.visibleLightAssemblies===4 && viewer.rearAmazonArrow===true
-    ? t(" · Focos visibles: 4/4 · Flecha Amazon · v3"," · Visible lamps: 4/4 · Amazon arrow · v3")
+  const lightStatus=viewer.originalFrontLamps>=4 && viewer.originalRearLamps>=8
+    ? t(" · Focos originales integrados · v4"," · Original built-in headlights · v4")
     : t(" · Versión antigua: recarga la página."," · Older version: reload the page.");
   $("inspectorStatus").textContent=viewer.quality==="basic"
     ? t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.")
