@@ -219,6 +219,19 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
  .summary-line { align-items:flex-start; }
 }
 
+.setup-fields { border:1px solid #d4e2f0;border-radius:10px;padding:14px;margin:14px 0;background:#eff7ff;min-width:0; }
+.setup-fields legend { font-size:14px;font-weight:750;color:#1d4267;padding:0 6px; }
+.setup-fields .fields { margin-top:12px; }
+.form-hint { font-size:13px;line-height:1.5;color:#385b7f;margin:10px 0 0; }
+.mileage-summary { margin:14px 0;padding:14px;border:1px solid #c2d9f0;border-radius:11px;background:#f2f8ff; }
+.mileage-summary .mileage-data { display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap; }
+.mileage-summary .mileage-data > div { flex:1 1 140px;min-width:0; }
+.mileage-summary small { color:#4f6885;display:block;font-size:12px;margin-bottom:4px; }
+.mileage-summary strong { color:#15385b;font-size:17px;overflow-wrap:anywhere; }
+.mileage-summary .pill { display:inline-block;margin-top:10px; }
+.oil-service-panel { border-top:1px solid #d5e4f2;margin-top:20px;padding-top:20px; }
+.oil-service-panel h3 { margin:0 0 6px;font-size:17px; }
+.oil-service-panel .btn { margin-top:12px; }
 .vehicle.expanded { flex-wrap:wrap; background:#f7fbff; border:1px solid var(--line); border-radius:11px; padding:12px; margin:7px 0; }
 .vehicle-inline-detail { flex:1 1 100%; width:100%; min-width:0; border-top:1px solid var(--line); padding-top:12px; margin-top:9px; }
 .vehicle-inline-detail > strong { display:block; font-size:14px; }
@@ -301,21 +314,42 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
    <div><label for="vehName" data-translate>Modelo de vehículo</label><input id="vehName" maxlength="80" required placeholder="Ford Transit"></div>
    <div><label for="vehYear" data-translate>Año</label><input id="vehYear" type="number" min="1980" max="2100" step="1" required></div>
    <div><label for="vehEngine" data-translate>Motor</label><input id="vehEngine" maxlength="40" required placeholder="3.5L"></div>
-   <div><label for="vehMiles" data-translate>Millaje actual</label><input id="vehMiles" type="number" min="0" step="1" required></div>
-   <div><label for="vehDue" data-translate>Próximo aceite (millas)</label><input id="vehDue" type="number" min="0" step="1" required></div>
-   <div><label for="vehInterval" data-translate>Intervalo de aceite (millas)</label><input id="vehInterval" type="number" min="1" step="1" required></div>
-  </div>
+   </div>
+  <fieldset id="vehInitialFields" class="setup-fields">
+   <legend data-translate>Datos iniciales de mantenimiento</legend>
+   <p class="muted" data-translate>Solo al crear la guagua: indica el millaje actual y el último cambio de aceite. Calcularemos automáticamente el próximo.</p>
+   <div class="fields">
+    <div><label for="vehMiles" data-translate>Millaje inicial</label><input id="vehMiles" type="number" min="0" step="1" required></div>
+    <div><label for="vehLastOil" data-translate>Millaje del último cambio de aceite</label><input id="vehLastOil" type="number" min="0" step="1" required></div>
+    <div><label for="vehInterval" data-translate>Intervalo de aceite (millas)</label><input id="vehInterval" type="number" min="1" step="1" required></div>
+   </div>
+   <p class="form-hint" id="vehicleOilSetupHint" role="status"></p>
+  </fieldset>
   <div class="form-actions"><button class="btn" type="submit" id="saveVehicle" data-translate>Guardar vehículo</button><button class="btn secondary" type="button" id="cancelVehicle" data-translate>Cancelar</button></div>
  </form>
  
 </div>
-<div class="panel"><h2 data-translate>Actualizar mantenimiento</h2>
-<form id="maintenanceForm"><div class="fields">
-<div><label for="maintVehicle" data-translate>Vehículo</label><select id="maintVehicle" required></select></div>
-<div><label for="miles" data-translate>Millaje actual</label><input id="miles" type="number" min="0" step="1" required></div>
-<div><label for="due" data-translate>Próximo aceite (millas)</label><input id="due" type="number" min="0" step="1" required></div>
-<div><label for="interval" data-translate>Intervalo de aceite (millas)</label><input id="interval" type="number" min="1" step="1" required></div>
-</div><div class="btnrow"><button class="btn" type="submit" data-translate>Guardar millaje</button><button class="btn secondary" type="button" id="oilChanged" data-translate>Registrar cambio de aceite</button></div></form>
+<div class="panel" id="mileagePanel">
+ <h2 data-translate>Millaje y cambio de aceite</h2>
+ <p class="muted" data-translate>Actualiza el odómetro de la guagua. El próximo aceite se calcula automáticamente cuando registras un servicio.</p>
+ <form id="maintenanceForm">
+  <div class="fields">
+   <div><label for="maintVehicle" data-translate>Vehículo</label><select id="maintVehicle" required></select></div>
+   <div><label for="miles" data-translate>Millaje actual del odómetro</label><input id="miles" type="number" min="0" step="1" required inputmode="numeric"></div>
+  </div>
+  <div id="mileageSummary" class="mileage-summary" role="status"></div>
+  <div class="btnrow"><button class="btn" type="submit" data-translate>Guardar millaje</button></div>
+ </form>
+ <section class="oil-service-panel" aria-labelledby="oilServiceHeading">
+  <h3 id="oilServiceHeading" data-translate>Registrar cambio de aceite realizado</h3>
+  <p class="muted" data-translate>Presiona el botón solamente cuando ya se haya cambiado el aceite. Usaremos el millaje del odómetro y el intervalo indicado.</p>
+  <div class="fields"><div>
+    <label for="interval" data-translate>Intervalo de aceite (millas)</label>
+    <input id="interval" type="number" min="1" max="100000" step="1" required inputmode="numeric">
+  </div></div>
+  <div id="oilServicePreview" class="form-hint" role="status"></div>
+  <button class="btn secondary" type="button" id="oilChanged" data-translate>Confirmar cambio de aceite</button>
+ </section>
 </div>
 
 <div class="panel" id="maintenanceHistoryPanel">
@@ -543,6 +577,38 @@ Object.assign(english, {
   "Repuesto: {part}": "Part: {part}"
 });
 
+// Simpler odometer and oil-service workflow; all dynamic text is bilingual.
+Object.assign(english, {
+  "Datos iniciales de mantenimiento": "Initial maintenance setup",
+  "Solo al crear la guagua: indica el millaje actual y el último cambio de aceite. Calcularemos automáticamente el próximo.": "When adding a vehicle, enter its mileage and last oil change mileage. The next service is calculated automatically.",
+  "Millaje inicial": "Starting mileage",
+  "Millaje del último cambio de aceite": "Mileage at last oil change",
+  "Millaje y cambio de aceite": "Mileage and oil changes",
+  "Actualiza el odómetro de la guagua. El próximo aceite se calcula automáticamente cuando registras un servicio.": "Update the vehicle odometer. The next oil change is calculated automatically when you log a service.",
+  "Millaje actual del odómetro": "Current odometer reading",
+  "Registrar cambio de aceite realizado": "Log a completed oil change",
+  "Presiona el botón solamente cuando ya se haya cambiado el aceite. Usaremos el millaje del odómetro y el intervalo indicado.": "Only press this button after the oil has actually been changed. We use the odometer reading and service interval.",
+  "Confirmar cambio de aceite": "Confirm oil change",
+  "Millaje registrado": "Recorded mileage",
+  "Próximo cambio de aceite": "Next oil change",
+  "Estado del aceite": "Oil service status",
+  "Próximo aceite calculado: {mileage} mi": "Calculated next oil change: {mileage} mi",
+  "Calculado desde el último cambio a {mileage} mi.": "Calculated from the last oil change at {mileage} mi.",
+  "Escribe un millaje válido y el intervalo para calcular el próximo cambio.": "Enter a valid mileage and interval to calculate the next oil change.",
+  "Si ya se cambió el aceite ahora, el próximo será a las {mileage} mi.": "If the oil was changed now, the next service will be at {mileage} mi.",
+  "No puedes guardar un millaje menor que el ya registrado ({mileage} mi).": "You cannot save mileage lower than the previously recorded reading ({mileage} mi).",
+  "No puedes registrar un cambio a menos millas que las ya guardadas ({mileage} mi).": "You cannot log an oil change below the saved mileage ({mileage} mi).",
+  "El último cambio no puede superar el millaje actual.": "Last oil change mileage cannot exceed the current odometer reading.",
+  "Revisa el millaje del último cambio y el intervalo.": "Check the last oil change mileage and interval.",
+  "¿Confirmas que YA cambiaste el aceite de {vehicle} a las {mileage} millas? El próximo será a las {due} millas.": "Confirm the oil was ALREADY changed on {vehicle} at {mileage} miles? The next service will be at {due} miles.",
+  "Millaje actualizado": "Mileage updated",
+  "Último cambio de aceite": "Last oil change",
+  "a las {mileage} mi": "at {mileage} mi",
+  "Sin fecha de cambio registrada": "No oil change date logged",
+  "Primero registra el millaje de referencia de la guagua.": "First enter the vehicle's baseline mileage.",
+  "No hay vehículos para actualizar.": "No vehicles to update."
+});
+
 function detectLanguage() {
   const preferences = navigator.languages?.length ? navigator.languages : [navigator.language];
   for (const preference of preferences) {
@@ -611,7 +677,51 @@ const s=$(id),old=s.value;s.replaceChildren();
 data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.id+" · "+v.name+" "+v.year;s.append(o)});
 if(getV(old))s.value=old;
 })}
-function maintenanceValues(){const v=getV($("maintVehicle").value);if(v){$("miles").value=v.miles;$("due").value=v.due;$("interval").value=v.interval}}
+// Odometer values are independent of the next oil-service target.
+function maintenanceValues(){
+ const v=getV($("maintVehicle").value);
+ $("miles").value=v?String(v.miles):"";
+ $("interval").value=v?String(v.interval):"";
+ $("miles").min=v?String(v.miles):"0";
+ $("oilChanged").disabled=!v;
+ renderMileageSummary();
+ renderOilServicePreview();
+}
+function renderMileageSummary(){
+ const v=getV($("maintVehicle").value),target=$("mileageSummary");
+ if(!v){target.textContent=translate("No hay vehículos para actualizar.");return;}
+ const remaining=left(v);
+ const status=remaining<0?"{mileage} mi vencidas":remaining<=500?"{mileage} mi restantes":"{mileage} mi restantes";
+ const className=remaining<0?"danger":remaining<=500?"warn":"";
+ target.innerHTML='<div class="mileage-data">'+
+  '<div><small>'+escaped(translate("Millaje registrado"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
+  '<div><small>'+escaped(translate("Próximo cambio de aceite"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div></div>'+
+  '<span class="pill '+className+'">'+escaped(translate(status,{mileage:commas(Math.abs(remaining))}))+'</span>';
+}
+function renderOilServicePreview(){
+ const v=getV($("maintVehicle").value),preview=$("oilServicePreview");
+ if(!v){preview.textContent="";return;}
+ const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
+ const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
+ if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<v.miles||
+    !Number.isSafeInteger(interval)||interval<1||interval>100000||!Number.isSafeInteger(due)){
+   preview.textContent=translate("Escribe un millaje válido y el intervalo para calcular el próximo cambio.");
+ }else{
+   preview.textContent=translate("Si ya se cambió el aceite ahora, el próximo será a las {mileage} mi.",{mileage:commas(due)});
+ }
+}
+function renderNewVehicleOilPreview(){
+ const preview=$("vehicleOilSetupHint");
+ if($("vehInitialFields").hidden){preview.textContent="";return;}
+ const milesText=$("vehMiles").value.trim(),oilText=$("vehLastOil").value.trim(),intervalText=$("vehInterval").value.trim();
+ const miles=Number(milesText),last=Number(oilText),interval=Number(intervalText),due=last+interval;
+ if(!milesText||!oilText||!intervalText||![miles,last,interval,due].every(Number.isSafeInteger)||
+    miles<0||last<0||last>miles||interval<1||!Number.isSafeInteger(due)){
+  preview.textContent=translate("Revisa el millaje del último cambio y el intervalo.");
+ }else{
+  preview.textContent=translate("Próximo aceite calculado: {mileage} mi",{mileage:commas(due)});
+ }
+}
 
 let selectedVehicleId=null;
 let editingVehicleId=null;
@@ -715,7 +825,10 @@ function renderExpenseBreakdown() {
 function vehicleDetailsMarkup(v) {
  const pending=data.damages.filter(d=>d.vehicle===v.id&&d.repaired!==true).length;
  const cost=countAndCost(v.id);
- const last=data.maintenance.filter(m=>m.vehicle===v.id).slice().reverse()[0];
+ const last=data.maintenance.filter(m=>m.vehicle===v.id&&m.type==="Cambio de aceite").slice().reverse()[0];
+ const lastOilText=last ? dateLabel(last.date)+' · '+commas(last.miles)+' mi' :
+   Number.isSafeInteger(v.lastOil) ? translate("a las {mileage} mi",{mileage:commas(v.lastOil)}) :
+   translate("Sin fecha de cambio registrada");
  return '<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
  '<div class="vehicle-info-grid">'+
  '<div><small>'+escaped(translate("Motor"))+'</small><strong>'+escaped(v.engine)+'</strong></div>'+
@@ -723,8 +836,8 @@ function vehicleDetailsMarkup(v) {
  '<div><small>'+escaped(translate("Próximo aceite (millas)"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div>'+
  '<div><small>'+escaped(translate("Averías pendientes"))+'</small><strong>'+pending+'</strong></div>'+
  '<div><small>'+escaped(translate("Total de gastos"))+'</small><strong>'+escaped(dollar(cost.total))+'</strong></div>'+
- '<div><small>'+escaped(translate("Último servicio"))+'</small><strong>'+
- (last ? escaped(dateLabel(last.date)) : escaped(translate("Sin servicios registrados")))+'</strong></div></div>'+ '<div class="vehicle-3d-entry"><button class="btn secondary" type="button" data-3d-open="'+escaped(v.id)+'">'+(language==="en"?"Inspect van in 3D":"Inspeccionar guagua en 3D")+'</button><small>'+(language==="en"?"Rotate and mark visible damage locations":"Gira la guagua y marca dónde está el daño")+'</small></div>';
+ '<div><small>'+escaped(translate("Último cambio de aceite"))+'</small><strong>'+
+ escaped(lastOilText)+'</strong></div></div>'+ '<div class="vehicle-3d-entry"><button class="btn secondary" type="button" data-3d-open="'+escaped(v.id)+'">'+(language==="en"?"Inspect van in 3D":"Inspeccionar guagua en 3D")+'</button><small>'+(language==="en"?"Rotate and mark visible damage locations":"Gira la guagua y marca dónde está el daño")+'</small></div>';
 }
 function commit(next) {
  if(!save(next)) return false;
@@ -819,9 +932,15 @@ function showVehicleForm(id) {
  $("vehName").value=v?v.name:"";
  $("vehYear").value=v?v.year:new Date().getFullYear();
  $("vehEngine").value=v?v.engine:"";
- $("vehMiles").value=v?v.miles:0;
- $("vehDue").value=v?v.due:5000;
- $("vehInterval").value=v?v.interval:5000;
+ $("vehInitialFields").hidden=!!v;
+ $("vehMiles").value=v?String(v.miles):"";
+ $("vehLastOil").value=v&&Number.isSafeInteger(v.lastOil)?String(v.lastOil):"";
+ $("vehInterval").value=v?String(v.interval):"5000";
+ for (const id of ["vehMiles","vehLastOil","vehInterval"]){
+  $(id).disabled=!!v;
+  $(id).required=!v;
+ }
+ renderNewVehicleOilPreview();
  $("saveVehicle").textContent=translate(v?"Guardar cambios":"Guardar vehículo");
  $("vehicleForm").scrollIntoView({behavior:"smooth",block:"nearest"});
  $("vehName").focus();
@@ -840,26 +959,39 @@ $("newVehicle").addEventListener("click",()=>showVehicleForm());
 $("cancelVehicle").addEventListener("click",hideVehicleForm);
 $("vehicleForm").addEventListener("submit",e=>{
  e.preventDefault();
- const id=$("vehId").value.trim().toUpperCase();
- const name=$("vehName").value.trim(),engine=$("vehEngine").value.trim();
- const year=Number($("vehYear").value),miles=Number($("vehMiles").value),due=Number($("vehDue").value),interval=Number($("vehInterval").value);
+ const id=$("vehId").value.trim().toUpperCase(),
+   name=$("vehName").value.trim(),engine=$("vehEngine").value.trim();
+ const year=Number($("vehYear").value);
  if(!/^[A-Z0-9][A-Z0-9-]{1,24}$/.test(id))return alert(translate("Revisa el identificador del vehículo."));
- if(!name||!engine||!Number.isSafeInteger(year)||year<1980||year>new Date().getFullYear()+1||
-  ![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)
+ if(!name||!engine||!Number.isSafeInteger(year)||year<1980||year>new Date().getFullYear()+1)
   return alert(translate("Revisa los datos del vehículo."));
  const old=editingVehicleId?getV(editingVehicleId):null;
  if(!old&&getV(id))return alert(translate("Ya existe un vehículo con ese identificador."));
  if(old&&id!==old.id)return alert(translate("Revisa el identificador del vehículo."));
- const updated={id,name,year,engine,miles,due,interval,condition:old?.condition||"Disponible"};
+ let updated;
+ if(old){
+  // Edit the description only; odometer updates belong in the mileage panel.
+  updated={...old,name,year,engine};
+ }else{
+  const milesText=$("vehMiles").value.trim(),lastText=$("vehLastOil").value.trim(),
+    intervalText=$("vehInterval").value.trim();
+  const miles=Number(milesText),lastOil=Number(lastText),interval=Number(intervalText),due=lastOil+interval;
+  if(!milesText||!lastText||!intervalText||![miles,lastOil,interval,due].every(Number.isSafeInteger)||
+     miles<0||lastOil<0||interval<1||interval>100000)
+   return alert(translate("Revisa el millaje del último cambio y el intervalo."));
+  if(lastOil>miles)return alert(translate("El último cambio no puede superar el millaje actual."));
+  updated={id,name,year,engine,miles,due,interval,lastOil,condition:"Disponible"};
+ }
  const vehicles=old?data.vehicles.map(v=>v.id===old.id?updated:v):[...data.vehicles,updated];
- const changedMaintenance=old&&(old.miles!==miles||old.due!==due||old.interval!==interval);
- const maintenance=changedMaintenance?[...data.maintenance,{id:Date.now(),vehicle:id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)}]:data.maintenance;
- if(!commit({...data,vehicles,maintenance}))return;
+ if(!commit({...data,vehicles}))return;
  hideVehicleForm();
  selectedVehicleId=id;
  renderFlota();
  alert(translate(old?"Datos de vehículo actualizados.":"Vehículo añadido a la demostración."));
 });
+["vehMiles","vehLastOil","vehInterval"].forEach(id=>$(id).addEventListener("input",renderNewVehicleOilPreview));
+$("miles").addEventListener("input",renderOilServicePreview);
+$("interval").addEventListener("input",renderOilServicePreview);
 $("maintVehicle").addEventListener("change",maintenanceValues);
 $("historyFilter").addEventListener("change",renderMaintenance);
 $("vehicleList").addEventListener("click",e=>{
@@ -879,23 +1011,31 @@ $("vehicleList").addEventListener("click",e=>{
  if(update){$("maintVehicle").value=update.dataset.vehicle;maintenanceValues();$("maintenanceForm").scrollIntoView({behavior:"smooth",block:"center"});$("miles").focus();}
 });
 $("maintenanceForm").addEventListener("submit",e=>{
- e.preventDefault();const v=getV($("maintVehicle").value);if(!v)return;
- const miles=Number($("miles").value),due=Number($("due").value),interval=Number($("interval").value);
- if(![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)return alert(translate("Verifica los valores del millaje."));
- if(v.miles===miles&&v.due===due&&v.interval===interval)return alert(translate("No hay cambios para guardar."));
- const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,due,interval}:item);
- const record={id:Date.now(),vehicle:v.id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)};
+ e.preventDefault();
+ const v=getV($("maintVehicle").value);if(!v)return;
+ const raw=$("miles").value.trim(),miles=Number(raw);
+ if(!raw||!Number.isSafeInteger(miles)||miles<0)return alert(translate("Verifica los valores del millaje."));
+ if(miles<v.miles)return alert(translate("No puedes guardar un millaje menor que el ya registrado ({mileage} mi).",{mileage:commas(v.miles)}));
+ if(miles===v.miles)return alert(translate("No hay cambios para guardar."));
+ // Updating the odometer NEVER changes v.due or v.interval.
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles}:item);
+ const record={id:Date.now(),vehicle:v.id,type:"Millaje actualizado",miles,due:v.due,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
  alert(translate("Millaje guardado en la demostración."));
 });
 $("oilChanged").addEventListener("click",()=>{
  const v=getV($("maintVehicle").value);if(!v)return;
- const miles=Number($("miles").value),interval=Number($("interval").value);
- if(!Number.isSafeInteger(miles)||miles<0||!Number.isSafeInteger(interval)||interval<1)return alert(translate("Verifica el millaje y el intervalo."));
- const due=miles+interval;
+ const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
+ const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
+ if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<0||
+    !Number.isSafeInteger(interval)||interval<1||interval>100000)
+  return alert(translate("Verifica el millaje y el intervalo."));
+ if(miles<v.miles)return alert(translate("No puedes registrar un cambio a menos millas que las ya guardadas ({mileage} mi).",{mileage:commas(v.miles)}));
  if(!Number.isSafeInteger(due))return alert(translate("El millaje y el intervalo producen un valor demasiado grande."));
- if(!confirm(translate("¿Registrar el cambio de aceite de {vehicle} a las {mileage} millas?",{vehicle:v.id,mileage:commas(miles)})))return;
- const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,interval,due}:item);
+ if(!confirm(translate("¿Confirmas que YA cambiaste el aceite de {vehicle} a las {mileage} millas? El próximo será a las {due} millas.",
+   {vehicle:v.id,mileage:commas(miles),due:commas(due)})))return;
+ // One atomic update: save odometer, oil interval, next service and history.
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,interval,due,lastOil:miles}:item);
  const record={id:Date.now(),vehicle:v.id,type:"Cambio de aceite",miles,due,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
  alert(translate("Nuevo cambio programado para {mileage} millas.",{mileage:commas(due)}));
