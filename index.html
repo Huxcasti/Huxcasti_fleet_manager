@@ -215,6 +215,11 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
  .vehicle-info-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .summary-line { align-items:flex-start; }
 }
+
+.vehicle.expanded { flex-wrap:wrap; background:#f7fbff; border:1px solid var(--line); border-radius:11px; padding:12px; margin:7px 0; }
+.vehicle-inline-detail { flex:1 1 100%; width:100%; min-width:0; border-top:1px solid var(--line); padding-top:12px; margin-top:9px; }
+.vehicle-inline-detail > strong { display:block; font-size:14px; }
+.vehicle-inline-detail .vehicle-info-grid { margin-top:10px; }
 </style>
 </head>
 <body>
@@ -258,7 +263,7 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
   </div>
   <div class="form-actions"><button class="btn" type="submit" id="saveVehicle" data-translate>Guardar vehículo</button><button class="btn secondary" type="button" id="cancelVehicle" data-translate>Cancelar</button></div>
  </form>
- <div id="vehicleDetails" class="note" hidden aria-live="polite"></div>
+ 
 </div>
 <div class="panel"><h2 data-translate>Actualizar mantenimiento</h2>
 <form id="maintenanceForm"><div class="fields">
@@ -407,6 +412,7 @@ Object.assign(english, {
   "Gastos por vehículo": "Expenses by vehicle",
   "Sin gastos para mostrar.": "No expenses to show.",
   "Ver ficha": "View details",
+  "Ocultar ficha": "Hide details",
   "Editar datos": "Edit vehicle",
   "Actualizar millaje": "Update mileage",
   "Ficha de vehículo": "Vehicle details",
@@ -516,14 +522,15 @@ function renderFlota() {
   const mileageLeft=left(v);
   const badge=mileageLeft<0?"danger":mileageLeft<=500?"warn":"";
   const service=mileageLeft<0?"Vencido":mileageLeft<=500?"Próximo":"Al día";
-  return '<div class="vehicle"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong>'+
+  const expanded=selectedVehicleId===v.id;
+  return '<div class="vehicle'+(expanded?" expanded":"")+'"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong>'+
    '<p>'+escaped(v.year)+' · '+escaped(v.engine)+' · '+escaped(translate(statusOf(v.id)))+'</p>'+
    '<p>'+escaped(translate("{mileage} millas",{mileage:commas(v.miles)}))+'</p></div>'+
    '<div class="end"><span class="pill '+badge+'">'+escaped(translate(service))+'</span>'+
    '<p>'+escaped(translate("Aceite: {mileage} mi",{mileage:commas(v.due)}))+'</p>'+
-   '<div class="vehicle-actions"><button class="btn secondary" type="button" data-detail="'+escaped(v.id)+'">'+translate("Ver ficha")+'</button>'+
+   '<div class="vehicle-actions"><button class="btn secondary" type="button" id="vehicle-details-btn-'+escaped(v.id)+'" data-detail="'+escaped(v.id)+'" aria-expanded="'+expanded+'" aria-controls="vehicle-inline-'+escaped(v.id)+'">'+translate(expanded?"Ocultar ficha":"Ver ficha")+'</button>'+
    '<button class="btn secondary" type="button" data-vehicle-edit="'+escaped(v.id)+'">'+translate("Editar datos")+'</button>'+
-   '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button></div></div></div>';
+   '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button></div></div>'+ (expanded?'<div class="vehicle-inline-detail" id="vehicle-inline-'+escaped(v.id)+'" role="region" aria-label="'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+'">'+vehicleDetailsMarkup(v)+'</div>':'')+'</div>';
  }).join("") : '<p class="muted">'+translate("No hay vehículos registrados.")+'</p>';
  $("alerts").innerHTML=late.length ? late.sort((a,b)=>left(a)-left(b)).map(v=>{
   const remaining=left(v),overdue=remaining<0;
@@ -594,14 +601,11 @@ function renderExpenseBreakdown() {
   '<strong>'+escaped(dollar(g.total))+'</strong></div>'
  ).join("") : '<p class="muted">'+translate("Sin gastos para mostrar.")+'</p>';
 }
-function renderVehicleDetails() {
- const el=$("vehicleDetails"),v=getV(selectedVehicleId);
- if(!v){el.hidden=true;el.replaceChildren();return;}
+function vehicleDetailsMarkup(v) {
  const pending=data.damages.filter(d=>d.vehicle===v.id&&d.repaired!==true).length;
  const cost=countAndCost(v.id);
  const last=data.maintenance.filter(m=>m.vehicle===v.id).slice().reverse()[0];
- el.hidden=false;
- el.innerHTML='<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
+ return '<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
  '<div class="vehicle-info-grid">'+
  '<div><small>'+escaped(translate("Motor"))+'</small><strong>'+escaped(v.engine)+'</strong></div>'+
  '<div><small>'+escaped(translate("Millaje actual"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
@@ -617,7 +621,7 @@ function commit(next) {
  render();
  return true;
 }
-function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown();renderVehicleDetails(); }
+function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown(); }
 function nextVehicleId() {
  let number=101;
  while(getV("F-"+number)) number++;
@@ -669,14 +673,20 @@ $("vehicleForm").addEventListener("submit",e=>{
  if(!commit({...data,vehicles,maintenance}))return;
  hideVehicleForm();
  selectedVehicleId=id;
- renderVehicleDetails();
+ renderFlota();
  alert(translate(old?"Datos de vehículo actualizados.":"Vehículo añadido a la demostración."));
 });
 $("maintVehicle").addEventListener("change",maintenanceValues);
 $("historyFilter").addEventListener("change",renderMaintenance);
 $("vehicleList").addEventListener("click",e=>{
  const detail=e.target.closest("[data-detail]");
- if(detail){selectedVehicleId=selectedVehicleId===detail.dataset.detail?null:detail.dataset.detail;renderVehicleDetails();return;}
+ if(detail){
+  const id=detail.dataset.detail;
+  selectedVehicleId=selectedVehicleId===id?null:id;
+  renderFlota();
+  document.getElementById("vehicle-details-btn-"+id)?.focus();
+  return;
+ }
  const edit=e.target.closest("[data-vehicle-edit]");
  if(edit){showVehicleForm(edit.dataset.vehicleEdit);return;}
  const update=e.target.closest("[data-vehicle]");
@@ -736,7 +746,7 @@ $("expenseForm").addEventListener("submit",e=>{
 $("resetDemo").addEventListener("click",()=>{
  if(!confirm(translate("¿Restaurar todos los datos ficticios?")))return;
  if(!commit(copy(initial)))return;
- selectedVehicleId=null;hideVehicleForm();renderVehicleDetails();$("partsResults").replaceChildren();
+ selectedVehicleId=null;hideVehicleForm();renderFlota();$("partsResults").replaceChildren();
 });
 localizePage();
 render();
