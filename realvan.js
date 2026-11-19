@@ -3,11 +3,12 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mountVan3D as mountBasicVan } from "./van3d.js";
 
-// 3D asset: 3DAssets.dev "Large high-roof panel van", CC0 1.0.
-// See https://3dassets.dev/assets/car-park-and-road-vehicle-fleet-high-roof-van-933a819a
-// Original generic shape; the Prime-style decals below are drawn for this demo.
-const MODEL_URL = "https://cdn.3dassets.dev/assets/32510/v1/model.glb";
-const MODEL_TIMEOUT_MS = 14000;
+// Authentic 2020 Ford Transit from the uploaded file.
+// Original artist: tonielpro520 on Sketchfab, Creative Commons Attribution (CC BY).
+// https://sketchfab.com/3d-models/2020-ford-transit-9801fbf49bfc456497495e45efa6df0c
+// Dark blue body finish is embedded in the custom GLB; Prime decals are drawn in this code.
+const MODEL_URL = new URL("./assets/ford-transit-prime.glb", import.meta.url).href;
+const MODEL_TIMEOUT_MS = 28000;
 
 function makeDecal(kind) {
  const canvas = document.createElement("canvas");
@@ -61,18 +62,18 @@ function attachBranding(van, scene) {
  const decals = [];
  if (sideMaterial) {
   for (const side of [-1, 1]) {
-   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.36, 0.91), sideMaterial);
+   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.42, 1.01), sideMaterial);
    mesh.rotation.y = side * Math.PI / 2;
-   mesh.position.set(side * 1.125, 2.00, -0.65);
+   mesh.position.set(side * 1.075, 1.84, -1.27);
    mesh.renderOrder = 2;
    van.add(mesh);
    decals.push(mesh);
   }
  }
  if (rearMaterial) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.46, 0.64), rearMaterial);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.58, 0.72), rearMaterial);
   mesh.rotation.y = Math.PI;
-  mesh.position.set(0, 1.84, -3.055);
+  mesh.position.set(0, 1.89, -3.340);
   mesh.renderOrder = 2;
   van.add(mesh);
   decals.push(mesh);
@@ -89,14 +90,14 @@ function tintBody(root) {
    if (!mat || !mat.color) return mat;
    const name = (mat.name || "").toLowerCase();
    const meshName = (obj.name || "").toLowerCase();
-   const match = /body.?paint|vehicle.?paint|car.?paint|bodywork|coachwork|exterior.?paint|paint.?blue/i;
+   const match = /vehicle_generic_smallspecmap__paint|body.?paint|vehicle.?paint|car.?paint|bodywork|coachwork|exterior.?paint|paint.?blue/i;
    if (!(match.test(name) || match.test(meshName))) return mat;
    if (/(?:window|glass|lamp|tire|tyre|wheel|rubber)/.test(name+" "+meshName)) return mat;
    if (processed.has(mat)) return processed.get(mat);
    const clone = mat.clone();
-   clone.color.set(0x273b4d);
-   clone.metalness = 0.35;
-   clone.roughness = 0.46;
+   clone.color.set(0x30495f);
+   clone.metalness = 0.30;
+   clone.roughness = 0.48;
    processed.set(mat,clone);
    return clone;
   });
@@ -116,7 +117,7 @@ export async function mountVan3D(stage, options = {}) {
    })
   ]);
  } catch (error) {
-  console.warn("Realistic van unavailable; using previous 3D model", error);
+  console.warn("Ford Transit GLB unavailable; using procedural demo fallback", error);
   const fallback = mountBasicVan(stage, options);
   fallback.quality = "basic";
   return fallback;
@@ -127,12 +128,12 @@ export async function mountVan3D(stage, options = {}) {
  const scene = new THREE.Scene();
  scene.background = new THREE.Color(0xe6effa);
  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
- const initialCamera = new THREE.Vector3(6.1, 3.55, 7.6);
+ const initialCamera = new THREE.Vector3(6.2, 3.4, 7.7);
  camera.position.copy(initialCamera);
  const renderer = new THREE.WebGLRenderer({
   antialias: true, powerPreference: "low-power", alpha: false
  });
- renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
  renderer.outputColorSpace = THREE.SRGBColorSpace;
  renderer.toneMapping = THREE.ACESFilmicToneMapping;
  renderer.toneMappingExposure = 1.3;
@@ -172,8 +173,8 @@ export async function mountVan3D(stage, options = {}) {
  const van = new THREE.Group();
  scene.add(van);
  const original = loaded.scene;
- // The CC0 asset is authored in metres, +Y up, +Z forward; wheels sit at ground.
- // Its extents are 2.202 x 2.733 x 6.042, matching our existing pin layout.
+ // Real Ford Transit GLB: +Y up, +Z forward; approximately 2.56 x 2.71 x 6.64 m.
+ // Old pins may appear offset, but new damage positions use this exact geometry.
  tintBody(original);
  van.add(original);
  original.updateMatrixWorld(true);
@@ -197,9 +198,9 @@ export async function mountVan3D(stage, options = {}) {
  function pinVector(input) {
   if (!input || ![input.x,input.y,input.z].every(Number.isFinite)) return null;
   return new THREE.Vector3(
-   THREE.MathUtils.clamp(input.x,-1.5,1.5),
-   THREE.MathUtils.clamp(input.y,-0.2,3.1),
-   THREE.MathUtils.clamp(input.z,-3.2,3.2)
+   THREE.MathUtils.clamp(input.x,-1.45,1.45),
+   THREE.MathUtils.clamp(input.y,-0.2,2.9),
+   THREE.MathUtils.clamp(input.z,-3.5,3.5)
   );
  }
  function makeMarker(position,color,radius) {
@@ -285,7 +286,7 @@ export async function mountVan3D(stage, options = {}) {
 
  return {
   quality:"detailed",
-  source:"3DAssets.dev — CC0 1.0",
+  source:"2020 Ford Transit by tonielpro520 — Sketchfab, CC Attribution",
   setMarkMode,
   resetView() {
    camera.position.copy(initialCamera);
