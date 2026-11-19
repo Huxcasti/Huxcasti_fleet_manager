@@ -825,7 +825,10 @@ function renderExpenseBreakdown() {
 function vehicleDetailsMarkup(v) {
  const pending=data.damages.filter(d=>d.vehicle===v.id&&d.repaired!==true).length;
  const cost=countAndCost(v.id);
- const last=data.maintenance.filter(m=>m.vehicle===v.id).slice().reverse()[0];
+ const last=data.maintenance.filter(m=>m.vehicle===v.id&&m.type==="Cambio de aceite").slice().reverse()[0];
+ const lastOilText=last ? dateLabel(last.date)+' · '+commas(last.miles)+' mi' :
+   Number.isSafeInteger(v.lastOil) ? translate("a las {mileage} mi",{mileage:commas(v.lastOil)}) :
+   translate("Sin fecha de cambio registrada");
  return '<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
  '<div class="vehicle-info-grid">'+
  '<div><small>'+escaped(translate("Motor"))+'</small><strong>'+escaped(v.engine)+'</strong></div>'+
@@ -833,8 +836,8 @@ function vehicleDetailsMarkup(v) {
  '<div><small>'+escaped(translate("Próximo aceite (millas)"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div>'+
  '<div><small>'+escaped(translate("Averías pendientes"))+'</small><strong>'+pending+'</strong></div>'+
  '<div><small>'+escaped(translate("Total de gastos"))+'</small><strong>'+escaped(dollar(cost.total))+'</strong></div>'+
- '<div><small>'+escaped(translate("Último servicio"))+'</small><strong>'+
- (last ? escaped(dateLabel(last.date)) : escaped(translate("Sin servicios registrados")))+'</strong></div></div>'+ '<div class="vehicle-3d-entry"><button class="btn secondary" type="button" data-3d-open="'+escaped(v.id)+'">'+(language==="en"?"Inspect van in 3D":"Inspeccionar guagua en 3D")+'</button><small>'+(language==="en"?"Rotate and mark visible damage locations":"Gira la guagua y marca dónde está el daño")+'</small></div>';
+ '<div><small>'+escaped(translate("Último cambio de aceite"))+'</small><strong>'+
+ escaped(lastOilText)+'</strong></div></div>'+ '<div class="vehicle-3d-entry"><button class="btn secondary" type="button" data-3d-open="'+escaped(v.id)+'">'+(language==="en"?"Inspect van in 3D":"Inspeccionar guagua en 3D")+'</button><small>'+(language==="en"?"Rotate and mark visible damage locations":"Gira la guagua y marca dónde está el daño")+'</small></div>';
 }
 function commit(next) {
  if(!save(next)) return false;
