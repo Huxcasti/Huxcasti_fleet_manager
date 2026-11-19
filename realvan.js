@@ -87,60 +87,46 @@ function attachBranding(van, scene) {
  return decals;
 }
 
-// The real Ford Transit GLB has lamp meshes, but on this particular export
-// several are buried 5-20 cm behind solid bodywork. Recoloring those 15 meshes
-// is not enough: the opaque shell still hides them. These slim visible lenses
-// sit just outside the measured body surface without changing the source GLB.
-// This does NOT affect the raycastable parts or saved damage locations.
-function addVisibleLightLenses(van) {
- const faces = [];
- const bezel = new THREE.MeshBasicMaterial({color:0x172330,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- const silver = new THREE.MeshBasicMaterial({color:0xc6d7e2,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- const highlight = new THREE.MeshBasicMaterial({color:0xe6f1f7,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- const amber = new THREE.MeshBasicMaterial({color:0xd78b29,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- const red = new THREE.MeshBasicMaterial({color:0xb9152c,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- const clear = new THREE.MeshBasicMaterial({color:0xb4c9d8,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
- function add(obj) {
-  van.add(obj);
-  obj.renderOrder = 3;
-  faces.push(obj);
-  return obj;
+// The GLB already includes precisely modeled lamp lenses. The previous
+// rectangular overlays floated in front of the van and are deliberately gone.
+// Render the genuine source lamp meshes in front of the opaque housing
+// (which otherwise occludes them), separating front and back by camera angle.
+function revealOriginalLights(root) {
+ const frontNames=new Set(["headlight_l","headlight_r","indicator_lf","indicator_rf","extralight_1","extralight_2"]);
+ const rearNames=new Set(["misc_z","taillight_l","taillight_r","brakelight_l","brakelight_r","brakelight_m","reversinglight_l","reversinglight_r","indicator_lr","indicator_rr"]);
+ const front=[],rear=[];
+ root.traverse(obj=>{
+  if(!obj.isMesh||!obj.material)return;
+  const name=(obj.name||"").toLowerCase().replace(/\.\d+$/,"");
+  const isFront=frontNames.has(name),isRear=rearNames.has(name);
+  if(!isFront&&!isRear)return;
+  // Per-mesh clone; never change the shared body paint/materials.
+  const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+  const adjusted=mats.map(mat=>{
+   const copy=mat.clone();
+   copy.depthTest=false;
+   copy.depthWrite=false;
+   copy.side=THREE.DoubleSide;
+   copy.transparent=true;
+   copy.opacity=1;
+   copy.needsUpdate=true;
+   return copy;
+  });
+  obj.material=Array.isArray(obj.material)?adjusted:adjusted[0];
+  // Genuine rear lens (misc_z) goes first; red brake, clear reverse and
+  // amber turn indicator meshes are layered above it.
+  if(name==="misc_z")obj.renderOrder=5;
+  else if(name.startsWith("reversinglight")||name.startsWith("indicator_"))obj.renderOrder=8;
+  else obj.renderOrder=7;
+  (isFront?front:rear).push(obj);
+ });
+ function update(cameraZ) {
+  // Avoid rendering the rear lamps through the van's body from the front.
+  const frontVisible=cameraZ>0.35,rearVisible=cameraZ< -0.35;
+  front.forEach(obj=>{obj.visible=frontVisible;});
+  rear.forEach(obj=>{obj.visible=rearVisible;});
  }
- function flatShape(points,z,material) {
-  const shape=new THREE.Shape();
-  points.forEach(([x,y],i)=>i ? shape.lineTo(x,y) : shape.moveTo(x,y));
-  shape.closePath();
-  const lens=new THREE.Mesh(new THREE.ShapeGeometry(shape),material);
-  lens.position.z=z;
-  return add(lens);
- }
- // Front: custom tapered bezels and lenses matched to the 2020 Ford Transit.
- // The hood can occlude the stock lamp geometry; z=3.20 is in front of the
- // measured outer shell at headlight height (max z ~3.12 there).
- for(const side of [-1,1]){
-  const p = list => list.map(([x,y])=>[side*x,y]);
-  flatShape(p([[0.56,1.102],[0.79,1.095],[0.906,1.01],[0.870,0.862],[0.680,0.858],[0.551,0.983]]),3.194,bezel);
-  flatShape(p([[0.591,1.078],[0.772,1.066],[0.865,1.001],[0.842,0.896],[0.684,0.895],[0.584,0.991]]),3.202,silver);
-  flatShape(p([[0.604,1.066],[0.766,1.054],[0.834,1.013],[0.755,1.021],[0.608,1.024]]),3.213,highlight);
-  flatShape(p([[0.846,1.017],[0.879,0.999],[0.853,0.909],[0.829,0.906]]),3.217,amber);
- }
- function rearBox(x,y,z,w,h,d,material) {
-  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
-  mesh.position.set(x,y,z);
-  return add(mesh);
- }
- // Rear: a narrow dark bezel with red upper brake lenses, amber indicators
- // and small clear reverse sections. z=-3.24 puts the lenses ahead of the
- // source's white door trim, whose rear surface is around z=-3.16.
- for(const side of [-1,1]) {
-  const x=side*0.905;
-  rearBox(x,1.069,-3.236,0.153,0.592,0.047,bezel);
-  rearBox(x,1.165,-3.264,0.122,0.339,0.022,red);
-  rearBox(x,0.983,-3.264,0.122,0.074,0.022,amber);
-  rearBox(x,0.890,-3.264,0.122,0.109,0.022,clear);
-  rearBox(x,0.807,-3.264,0.122,0.039,0.022,red);
- }
- return { assemblies:4, surfaces:faces.length };
+ return {frontCount:front.length,rearCount:rear.length,update};
 }
 
 // The source GLB has no embedded textures: 34 of its 36 materials default
@@ -199,6 +185,7 @@ function tintBody(root) {
   "brakelight_r": {color:0xd52d3e,roughness:0.16,emissive:0x941222,emissiveIntensity:0.27},
   "brakelight_m": {color:0xe33648,roughness:0.16,emissive:0xb01526,emissiveIntensity:0.30},
   // Clear reverse lenses; turn signals are amber, not white.
+  "misc_z": {color:0xab2035,metalness:0.10,roughness:0.23,emissive:0x4d050b,emissiveIntensity:0.07},
   "reversinglight_l": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
   "reversinglight_r": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
   "indicator_lf": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
@@ -329,7 +316,8 @@ export async function mountVan3D(stage, options = {}) {
  scene.add(floor);
 
  const decals = attachBranding(van);
- const visibleLenses = addVisibleLightLenses(van);
+ const originalLamps = revealOriginalLights(original);
+ originalLamps.update(camera.position.z);
  const pickable = [];
  original.traverse(o => { if (o.isMesh && o.geometry) pickable.push(o); });
  const markers = [];
@@ -422,6 +410,7 @@ export async function mountVan3D(stage, options = {}) {
   if(stopped)return;
   frame=window.requestAnimationFrame(animate);
   controls.update();
+  originalLamps.update(camera.position.z - controls.target.z);
   renderer.render(scene,camera);
  }
  animate();
@@ -430,8 +419,8 @@ export async function mountVan3D(stage, options = {}) {
   quality:"detailed",
   lightsApplied: lightDiagnostic.lightsApplied,
   lightNames: lightDiagnostic.lightNames,
-  visibleLightAssemblies:visibleLenses.assemblies,
-  visibleLightSurfaces:visibleLenses.surfaces,
+  originalFrontLamps:originalLamps.frontCount,
+  originalRearLamps:originalLamps.rearCount,
   rearAmazonArrow:true,
   source:"2020 Ford Transit by tonielpro520 — Sketchfab, CC Attribution",
   setMarkMode,
