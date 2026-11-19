@@ -179,6 +179,42 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
   .fields { grid-template-columns: minmax(0, 1fr); }
   .vehicle { align-items: flex-start; }
 }
+
+/* v2 demo refinements */
+[hidden] { display: none !important; }
+.section-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:15px; }
+.section-heading h2 { margin:0; }
+.section-heading .muted { margin:4px 0 0; }
+.section-heading .filter-label { margin:0; min-width:170px; }
+.section-heading select { min-height:37px; }
+.vehicle-actions { display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap; margin-top:9px; }
+.vehicle-actions .btn { min-height:34px; padding:6px 9px; font-size:12px; }
+.vehicle .end { max-width:60%; }
+.vehicle-info-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:10px; }
+.vehicle-info-grid div { background:#fff; border:1px solid #d3e4f5; border-radius:8px; padding:10px; }
+.vehicle-info-grid small { display:block; color:var(--muted); font-size:12px; }
+.vehicle-info-grid strong { overflow-wrap:anywhere; font-size:14px; }
+.summary-line { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #e1eaf5; }
+.summary-line:last-child { border-bottom:0; }
+.summary-line small { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+.summary-line strong { overflow-wrap:anywhere; }
+.form-actions { display:flex; flex-wrap:wrap; gap:9px; }
+#vehicleForm { padding:16px; border-radius:10px; border:1px solid #d6e3f1; background:#f8fbff; }
+#vehicleForm input[readonly] { background:#ecf1f6; color:#425a72; }
+#vehicleDetails { margin-top:12px; }
+#vehicleManagerPanel, #maintenanceHistoryPanel { scroll-margin-top:20px; }
+@media(max-width:520px) {
+ .tabs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .tab { min-height:40px; }
+ .section-heading { align-items:stretch; }
+ .section-heading .btn { width:100%; }
+ .section-heading .filter-label { width:100%; }
+ .vehicle { flex-direction:column; align-items:stretch; }
+ .vehicle .end { max-width:none; text-align:left; }
+ .vehicle-actions { justify-content:flex-start; }
+ .vehicle-info-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .summary-line { align-items:flex-start; }
+}
 </style>
 </head>
 <body>
@@ -204,6 +240,26 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <div class="panel"><h2 data-translate>Mis vehículos</h2><div id="vehicleList"></div></div>
 <div class="panel"><h2 data-translate>Alertas de mantenimiento</h2><div class="note warning" data-translate>Aviso cuando faltan 500 millas o menos para el aceite, según el millaje registrado.</div><div id="alerts"></div></div>
 </div>
+
+<div class="panel" id="vehicleManagerPanel">
+ <div class="section-heading">
+  <div><h2 data-translate>Administrar vehículos</h2><p class="muted" data-translate>Registra unidades o modifica sus datos. El estado depende de las averías pendientes.</p></div>
+  <button class="btn" type="button" id="newVehicle" data-translate>Añadir vehículo</button>
+ </div>
+ <form id="vehicleForm" hidden>
+  <div class="fields">
+   <div><label for="vehId" data-translate>Identificador</label><input id="vehId" maxlength="25" required placeholder="F-106"></div>
+   <div><label for="vehName" data-translate>Modelo de vehículo</label><input id="vehName" maxlength="80" required placeholder="Ford Transit"></div>
+   <div><label for="vehYear" data-translate>Año</label><input id="vehYear" type="number" min="1980" max="2100" step="1" required></div>
+   <div><label for="vehEngine" data-translate>Motor</label><input id="vehEngine" maxlength="40" required placeholder="3.5L"></div>
+   <div><label for="vehMiles" data-translate>Millaje actual</label><input id="vehMiles" type="number" min="0" step="1" required></div>
+   <div><label for="vehDue" data-translate>Próximo aceite (millas)</label><input id="vehDue" type="number" min="0" step="1" required></div>
+   <div><label for="vehInterval" data-translate>Intervalo de aceite (millas)</label><input id="vehInterval" type="number" min="1" step="1" required></div>
+  </div>
+  <div class="form-actions"><button class="btn" type="submit" id="saveVehicle" data-translate>Guardar vehículo</button><button class="btn secondary" type="button" id="cancelVehicle" data-translate>Cancelar</button></div>
+ </form>
+ <div id="vehicleDetails" class="note" hidden aria-live="polite"></div>
+</div>
 <div class="panel"><h2 data-translate>Actualizar mantenimiento</h2>
 <form id="maintenanceForm"><div class="fields">
 <div><label for="maintVehicle" data-translate>Vehículo</label><select id="maintVehicle" required></select></div>
@@ -211,6 +267,11 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <div><label for="due" data-translate>Próximo aceite (millas)</label><input id="due" type="number" min="0" step="1" required></div>
 <div><label for="interval" data-translate>Intervalo de aceite (millas)</label><input id="interval" type="number" min="1" step="1" required></div>
 </div><div class="btnrow"><button class="btn" type="submit" data-translate>Guardar millaje</button><button class="btn secondary" type="button" id="oilChanged" data-translate>Registrar cambio de aceite</button></div></form>
+</div>
+
+<div class="panel" id="maintenanceHistoryPanel">
+ <div class="section-heading"><h2 data-translate>Historial de mantenimiento</h2><label class="filter-label" for="historyFilter"><span data-translate>Filtrar por vehículo</span><select id="historyFilter"></select></label></div>
+ <div id="maintenanceHistory"></div>
 </div>
 </section>
 <section class="page" id="page-averias" hidden><div class="cols">
@@ -232,7 +293,9 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <div><label for="expenseCost" data-translate>Cantidad en dólares</label><input id="expenseCost" type="number" min="0.01" step="0.01" required></div>
 <div><label for="expenseDetails" data-translate>Descripción</label><input id="expenseDetails" maxlength="150" required placeholder="Ej.: Cambio de filtros" data-translate-placeholder></div>
 <button class="btn" type="submit" data-translate>Guardar gasto</button></form></div>
-<div class="panel"><h2 data-translate>Historial de gastos</h2><div id="totalCosts" class="note"></div><div id="costEntries"></div></div></div></section>
+<div class="panel"><h2 data-translate>Historial de gastos</h2><div id="totalCosts" class="note"></div><div id="costEntries"></div></div>
+<div class="panel"><h2 data-translate>Gastos por vehículo</h2><div id="expenseByVehicle"></div></div>
+</div></section>
 <footer><span data-translate>Demo para WILX Logistics. Usa datos ficticios. Los cambios se guardan en este navegador.</span> <button class="btn secondary" type="button" id="resetDemo" data-translate>Reiniciar demo</button></footer>
 </main></div>
 <script>
@@ -324,6 +387,46 @@ const english = {
   "¿Restaurar todos los datos ficticios?": "Reset all sample data?"
 };
 
+Object.assign(english, {
+  "Administrar vehículos": "Manage vehicles",
+  "Registra unidades o modifica sus datos. El estado depende de las averías pendientes.": "Add or edit vehicles. Their status reflects unresolved repair reports.",
+  "Añadir vehículo": "Add vehicle",
+  "Identificador": "Vehicle ID",
+  "Modelo de vehículo": "Vehicle model",
+  "Año": "Year",
+  "Motor": "Engine",
+  "Guardar vehículo": "Save vehicle",
+  "Guardar cambios": "Save changes",
+  "Cancelar": "Cancel",
+  "Historial de mantenimiento": "Maintenance history",
+  "Filtrar por vehículo": "Filter by vehicle",
+  "Todos los vehículos": "All vehicles",
+  "Sin historial de mantenimiento.": "No maintenance history yet.",
+  "Actualización de mantenimiento": "Maintenance update",
+  "Cambio de aceite": "Oil change",
+  "Gastos por vehículo": "Expenses by vehicle",
+  "Sin gastos para mostrar.": "No expenses to show.",
+  "Ver ficha": "View details",
+  "Editar datos": "Edit vehicle",
+  "Actualizar millaje": "Update mileage",
+  "Ficha de vehículo": "Vehicle details",
+  "Averías pendientes": "Open repair reports",
+  "Total de gastos": "Total expenses",
+  "Último servicio": "Latest service",
+  "Sin servicios registrados": "No services logged",
+  "Total: {amount}": "Total: {amount}",
+  "{count} gastos": "{count} expenses",
+  "Datos de vehículo actualizados.": "Vehicle updated.",
+  "Vehículo añadido a la demostración.": "Vehicle added to demo.",
+  "Ya existe un vehículo con ese identificador.": "A vehicle with that ID already exists.",
+  "Revisa los datos del vehículo.": "Check the vehicle details.",
+  "Revisa el identificador del vehículo.": "Check the vehicle ID.",
+  "El millaje y el intervalo producen un valor demasiado grande.": "Mileage and interval exceed the allowed range.",
+  "Ejemplo": "Sample",
+  "No hay cambios para guardar.": "No changes to save.",
+  "Datos de demostración almacenados solo en este navegador.": "Demo data is stored only in this browser."
+});
+
 function detectLanguage() {
   const preferences = navigator.languages?.length ? navigator.languages : [navigator.language];
   for (const preference of preferences) {
@@ -364,11 +467,12 @@ const initial={
   {id:"F-104",name:"Ford Transit",year:2023,engine:"3.5L",miles:30500,due:35000,interval:5000,condition:"Disponible"},
   {id:"F-105",name:"Ram ProMaster",year:2022,engine:"3.6L",miles:67200,due:67500,interval:5000,condition:"Disponible"}],
   damages:[{id:1,vehicle:"F-103",part:"Alternador",details:"Pendiente de diagnóstico",date:"Ejemplo"}],
-  expenses:[{id:1,vehicle:"F-103",type:"Repuesto",cost:125,details:"Gasto de demostración",date:"Ejemplo"}]
+  expenses:[{id:1,vehicle:"F-103",type:"Repuesto",cost:125,details:"Gasto de demostración",date:"Ejemplo"}],
+  maintenance:[{id:1,vehicle:"F-101",type:"Cambio de aceite",miles:45000,due:50000,date:"2026-10-28"},{id:2,vehicle:"F-102",type:"Cambio de aceite",miles:40000,due:45000,date:"2026-10-30"}]
 };
 const copy=obj=>JSON.parse(JSON.stringify(obj));
 let data=copy(initial);
-try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&Array.isArray(saved.vehicles)&&Array.isArray(saved.damages)&&Array.isArray(saved.expenses))data=saved}catch{}
+try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&Array.isArray(saved.vehicles)&&Array.isArray(saved.damages)&&Array.isArray(saved.expenses)){data={...copy(initial),...saved,maintenance:Array.isArray(saved.maintenance)?saved.maintenance:[]};}}catch{}
 const $=id=>document.getElementById(id);
 const escaped=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const currencyFormat = new Intl.NumberFormat(locale, {style:"currency",currency:"USD"});
@@ -392,48 +496,40 @@ data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;
 if(getV(old))s.value=old;
 })}
 function maintenanceValues(){const v=getV($("maintVehicle").value);if(v){$("miles").value=v.miles;$("due").value=v.due;$("interval").value=v.interval}}
+
+let selectedVehicleId=null;
+let editingVehicleId=null;
+const statusOf = id => data.damages.some(d => d.vehicle===id && d.repaired!==true) ? "En reparación" : "Disponible";
+const dateLabel = date => /^\d{4}-\d{2}-\d{2}$/.test(String(date)) ?
+  new Date(date+"T12:00:00").toLocaleDateString(locale) : translate(String(date||"Ejemplo"));
+const countAndCost = id => {
+  const items=data.expenses.filter(e=>e.vehicle===id);
+  return {count:items.length,total:items.reduce((sum,e)=>sum+Number(e.cost||0),0)};
+};
 function renderFlota() {
-  const {vehicles} = data;
-  const late = vehicles.filter(vehicle => left(vehicle) <= 500);
-  const available = vehicles.filter(vehicle => vehicle.condition === "Disponible").length;
-  const stats = [
-    ["Guaguas", vehicles.length],
-    ["Disponibles", available],
-    ["En reparación", vehicles.length - available],
-    ["Aceite próximo", late.length]
-  ];
-  $("stats").innerHTML = stats.map(([label, value]) =>
-    `<div class="stat"><label>${translate(label)}</label><b>${value}</b></div>`
-  ).join("");
-
-  $("vehicleList").innerHTML = vehicles.map(vehicle => {
-    const mileageLeft = left(vehicle);
-    const badge = mileageLeft < 0 ? "danger" : mileageLeft <= 500 ? "warn" : "";
-    const status = mileageLeft < 0 ? "Vencido" : mileageLeft <= 500 ? "Próximo" : "Al día";
-    const mileage = translate("{mileage} millas", {mileage: commas(vehicle.miles)});
-    const oilChange = translate("Aceite: {mileage} mi", {mileage: commas(vehicle.due)});
-    return `<div class="vehicle">
-      <div>
-        <strong>${escaped(vehicle.id)} · ${escaped(vehicle.name)}</strong>
-        <p>${vehicle.year} · ${mileage} · ${escaped(translate(vehicle.condition))}</p>
-      </div>
-      <div class="end">
-        <span class="pill ${badge}">${translate(status)}</span>
-        <p>${oilChange}</p>
-        <button class="btn secondary" type="button" data-vehicle="${escaped(vehicle.id)}">${translate("Editar")}</button>
-      </div>
-    </div>`;
-  }).join("");
-
-  $("alerts").innerHTML = late.length ? late.sort((a, b) => left(a) - left(b)).map(vehicle => {
-    const mileageLeft = left(vehicle);
-    const overdue = mileageLeft < 0;
-    const message = overdue ? "{mileage} mi vencidas" : "{mileage} mi restantes";
-    return `<div class="entry">
-      <div><strong>${escaped(vehicle.id)}</strong><p>${escaped(vehicle.name)}</p></div>
-      <span class="pill ${overdue ? "danger" : "warn"}">${translate(message, {mileage: commas(Math.abs(mileageLeft))})}</span>
-    </div>`;
-  }).join("") : `<p class="muted">${translate("Sin alertas pendientes.")}</p>`;
+ const vehicles=data.vehicles;
+ const late=vehicles.filter(vehicle=>left(vehicle)<=500);
+ const available=vehicles.filter(v=>statusOf(v.id)==="Disponible").length;
+ const stats=[["Guaguas",vehicles.length],["Disponibles",available],["En reparación",vehicles.length-available],["Aceite próximo",late.length]];
+ $("stats").innerHTML=stats.map(pair=>'<div class="stat"><label>'+escaped(translate(pair[0]))+'</label><b>'+pair[1]+'</b></div>').join("");
+ $("vehicleList").innerHTML=vehicles.length ? vehicles.map(v=>{
+  const mileageLeft=left(v);
+  const badge=mileageLeft<0?"danger":mileageLeft<=500?"warn":"";
+  const service=mileageLeft<0?"Vencido":mileageLeft<=500?"Próximo":"Al día";
+  return '<div class="vehicle"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong>'+
+   '<p>'+escaped(v.year)+' · '+escaped(v.engine)+' · '+escaped(translate(statusOf(v.id)))+'</p>'+
+   '<p>'+escaped(translate("{mileage} millas",{mileage:commas(v.miles)}))+'</p></div>'+
+   '<div class="end"><span class="pill '+badge+'">'+escaped(translate(service))+'</span>'+
+   '<p>'+escaped(translate("Aceite: {mileage} mi",{mileage:commas(v.due)}))+'</p>'+
+   '<div class="vehicle-actions"><button class="btn secondary" type="button" data-detail="'+escaped(v.id)+'">'+translate("Ver ficha")+'</button>'+
+   '<button class="btn secondary" type="button" data-vehicle-edit="'+escaped(v.id)+'">'+translate("Editar datos")+'</button>'+
+   '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button></div></div></div>';
+ }).join("") : '<p class="muted">'+translate("No hay vehículos registrados.")+'</p>';
+ $("alerts").innerHTML=late.length ? late.sort((a,b)=>left(a)-left(b)).map(v=>{
+  const remaining=left(v),overdue=remaining<0;
+  return '<div class="entry"><div><strong>'+escaped(v.id)+'</strong><p>'+escaped(v.name)+'</p></div>'+
+   '<span class="pill '+(overdue?"danger":"warn")+'">'+escaped(translate(overdue?"{mileage} mi vencidas":"{mileage} mi restantes",{mileage:commas(Math.abs(remaining))}))+'</span></div>';
+ }).join("") : '<p class="muted">'+translate("Sin alertas pendientes.")+'</p>';
 }
 function renderDamages() {
   const list = $("damages");
@@ -475,51 +571,173 @@ function renderExpenses() {
     </div>`;
   }).join("") : `<p class="muted">${translate("Sin gastos registrados.")}</p>`;
 }
-function render(){options();maintenanceValues();renderFlota();renderDamages();renderExpenses()}
+
+function renderMaintenance() {
+ const filter=$("historyFilter"),old=filter.value;
+ filter.replaceChildren();
+ const add=(value,name)=>{const item=document.createElement("option");item.value=value;item.textContent=name;filter.append(item);};
+ add("all",translate("Todos los vehículos"));
+ data.vehicles.forEach(v=>add(v.id,v.id+" · "+v.name));
+ filter.value=old && (old==="all"||getV(old)) ? old : "all";
+ const records=data.maintenance.filter(m=>filter.value==="all"||m.vehicle===filter.value).slice().reverse();
+ $("maintenanceHistory").innerHTML=records.length ? records.map(m=>
+  '<div class="entry"><div><strong>'+escaped(m.vehicle)+' · '+escaped(translate(m.type))+'</strong>'+
+  '<p>'+escaped(dateLabel(m.date))+' · '+escaped(commas(m.miles))+' mi</p></div>'+
+  '<div class="end"><span class="pill">'+escaped(translate("Aceite: {mileage} mi",{mileage:commas(m.due)}))+'</span></div></div>'
+ ).join("") : '<p class="muted">'+translate("Sin historial de mantenimiento.")+'</p>';
+}
+function renderExpenseBreakdown() {
+ const groups=data.vehicles.map(v=>({vehicle:v,...countAndCost(v.id)})).filter(x=>x.count>0).sort((a,b)=>b.total-a.total);
+ $("expenseByVehicle").innerHTML=groups.length ? groups.map(g=>
+  '<div class="summary-line"><div><strong>'+escaped(g.vehicle.id)+' · '+escaped(g.vehicle.name)+'</strong>'+
+  '<small>'+escaped(translate("{count} gastos",{count:g.count}))+'</small></div>'+
+  '<strong>'+escaped(dollar(g.total))+'</strong></div>'
+ ).join("") : '<p class="muted">'+translate("Sin gastos para mostrar.")+'</p>';
+}
+function renderVehicleDetails() {
+ const el=$("vehicleDetails"),v=getV(selectedVehicleId);
+ if(!v){el.hidden=true;el.replaceChildren();return;}
+ const pending=data.damages.filter(d=>d.vehicle===v.id&&d.repaired!==true).length;
+ const cost=countAndCost(v.id);
+ const last=data.maintenance.filter(m=>m.vehicle===v.id).slice().reverse()[0];
+ el.hidden=false;
+ el.innerHTML='<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
+ '<div class="vehicle-info-grid">'+
+ '<div><small>'+escaped(translate("Motor"))+'</small><strong>'+escaped(v.engine)+'</strong></div>'+
+ '<div><small>'+escaped(translate("Millaje actual"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
+ '<div><small>'+escaped(translate("Próximo aceite (millas)"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div>'+
+ '<div><small>'+escaped(translate("Averías pendientes"))+'</small><strong>'+pending+'</strong></div>'+
+ '<div><small>'+escaped(translate("Total de gastos"))+'</small><strong>'+escaped(dollar(cost.total))+'</strong></div>'+
+ '<div><small>'+escaped(translate("Último servicio"))+'</small><strong>'+
+ (last ? escaped(dateLabel(last.date)) : escaped(translate("Sin servicios registrados")))+'</strong></div></div>';
+}
+function commit(next) {
+ if(!save(next)) return false;
+ data=next;
+ render();
+ return true;
+}
+function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown();renderVehicleDetails(); }
+function nextVehicleId() {
+ let number=101;
+ while(getV("F-"+number)) number++;
+ return "F-"+number;
+}
+function showVehicleForm(id) {
+ const v=id?getV(id):null;
+ editingVehicleId=v?v.id:null;
+ $("vehicleForm").hidden=false;
+ $("vehId").readOnly=!!v;
+ $("vehId").value=v?v.id:nextVehicleId();
+ $("vehName").value=v?v.name:"";
+ $("vehYear").value=v?v.year:new Date().getFullYear();
+ $("vehEngine").value=v?v.engine:"";
+ $("vehMiles").value=v?v.miles:0;
+ $("vehDue").value=v?v.due:5000;
+ $("vehInterval").value=v?v.interval:5000;
+ $("saveVehicle").textContent=translate(v?"Guardar cambios":"Guardar vehículo");
+ $("vehicleForm").scrollIntoView({behavior:"smooth",block:"nearest"});
+ $("vehName").focus();
+}
+function hideVehicleForm(){editingVehicleId=null;$("vehicleForm").hidden=true;$("vehicleForm").reset();}
+
+
 document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
-document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",tab===t));
-document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+tab.dataset.page);
-const titles = {flota:"Resumen de la flota",averias:"Reportes de averías",repuestos:"Búsqueda de repuestos",gastos:"Control de gastos"};
-$("pageTitle").textContent = translate(titles[tab.dataset.page]);
+ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",tab===t));
+ document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+tab.dataset.page);
+ const titles={flota:"Resumen de la flota",averias:"Reportes de averías",repuestos:"Búsqueda de repuestos",gastos:"Control de gastos"};
+ $("pageTitle").textContent=translate(titles[tab.dataset.page]);
 }));
-$("maintVehicle").addEventListener("change",maintenanceValues);
-$("vehicleList").addEventListener("click",e=>{const b=e.target.closest("[data-vehicle]");if(b){$("maintVehicle").value=b.dataset.vehicle;maintenanceValues();$("miles").focus()}});
-$("maintenanceForm").addEventListener("submit",e=>{e.preventDefault();const v=getV($("maintVehicle").value);if(!v)return;
-const miles=Number($("miles").value),due=Number($("due").value),interval=Number($("interval").value);
-if(![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)return alert(translate("Verifica los valores del millaje."));
-Object.assign(v,{miles,due,interval});save();render();alert(translate("Millaje guardado en la demostración."))});
-$("oilChanged").addEventListener("click",()=>{const v=getV($("maintVehicle").value);if(!v)return;
-const miles=Number($("miles").value),interval=Number($("interval").value);
-if(!Number.isSafeInteger(miles)||miles<0||!Number.isSafeInteger(interval)||interval<1)return alert(translate("Verifica el millaje y el intervalo."));
-if(!confirm(translate("¿Registrar el cambio de aceite de {vehicle} a las {mileage} millas?", {vehicle: v.id, mileage: commas(miles)})))return;
-v.miles=miles;v.interval=interval;v.due=miles+interval;save();render();alert(translate("Nuevo cambio programado para {mileage} millas.", {mileage: commas(v.due)}))});
-$("damageForm").addEventListener("submit",e=>{e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
-data.damages.push({id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:new Date().toISOString().slice(0,10)});save();renderDamages();e.target.reset();alert(translate("Avería registrada en la demo."))});
-
-$("damages").addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-repair-index]");
-  if (!button) return;
-
-  const index = Number(button.dataset.repairIndex);
-  const damage = data.damages[index];
-  if (!damage || damage.repaired === true) return;
-
-  const updated = { ...data, damages: data.damages.slice() };
-  updated.damages[index] = { ...damage, repaired: true };
-  if (!save(updated)) return;
-
-  data = updated;
-  renderDamages();
-  $("damage-status-" + index).focus();
+$("newVehicle").addEventListener("click",()=>showVehicleForm());
+$("cancelVehicle").addEventListener("click",hideVehicleForm);
+$("vehicleForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const id=$("vehId").value.trim().toUpperCase();
+ const name=$("vehName").value.trim(),engine=$("vehEngine").value.trim();
+ const year=Number($("vehYear").value),miles=Number($("vehMiles").value),due=Number($("vehDue").value),interval=Number($("vehInterval").value);
+ if(!/^[A-Z0-9][A-Z0-9-]{1,24}$/.test(id))return alert(translate("Revisa el identificador del vehículo."));
+ if(!name||!engine||!Number.isSafeInteger(year)||year<1980||year>new Date().getFullYear()+1||
+  ![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)
+  return alert(translate("Revisa los datos del vehículo."));
+ const old=editingVehicleId?getV(editingVehicleId):null;
+ if(!old&&getV(id))return alert(translate("Ya existe un vehículo con ese identificador."));
+ if(old&&id!==old.id)return alert(translate("Revisa el identificador del vehículo."));
+ const updated={id,name,year,engine,miles,due,interval,condition:old?.condition||"Disponible"};
+ const vehicles=old?data.vehicles.map(v=>v.id===old.id?updated:v):[...data.vehicles,updated];
+ const changedMaintenance=old&&(old.miles!==miles||old.due!==due||old.interval!==interval);
+ const maintenance=changedMaintenance?[...data.maintenance,{id:Date.now(),vehicle:id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)}]:data.maintenance;
+ if(!commit({...data,vehicles,maintenance}))return;
+ hideVehicleForm();
+ selectedVehicleId=id;
+ renderVehicleDetails();
+ alert(translate(old?"Datos de vehículo actualizados.":"Vehículo añadido a la demostración."));
 });
-$("partsForm").addEventListener("submit",e=>{e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
-const q=v.year+" "+v.name+" "+v.engine+" "+part;
-const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
-const target=$("partsResults");target.replaceChildren();const p=document.createElement("p");p.textContent=translate("Búsquedas preparadas para {query}", {query: q});target.append(p);
-urls.forEach(([name,url])=>{const a=document.createElement("a");a.className="shop";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=translate("Buscar en {store} ↗", {store: name});target.append(a)})});
-$("expenseForm").addEventListener("submit",e=>{e.preventDefault();const cost=Number($("expenseCost").value),details=$("expenseDetails").value.trim();if(!Number.isFinite(cost)||cost<=0||!details)return;
-data.expenses.push({id:Date.now(),vehicle:$("expenseVehicle").value,type:$("expenseType").value,cost,details,date:new Date().toISOString().slice(0,10)});save();renderExpenses();e.target.reset();alert(translate("Gasto registrado en la demo."))});
-$("resetDemo").addEventListener("click",()=>{if(confirm(translate("¿Restaurar todos los datos ficticios?"))){data=copy(initial);save();render();$("partsResults").replaceChildren()}});
+$("maintVehicle").addEventListener("change",maintenanceValues);
+$("historyFilter").addEventListener("change",renderMaintenance);
+$("vehicleList").addEventListener("click",e=>{
+ const detail=e.target.closest("[data-detail]");
+ if(detail){selectedVehicleId=selectedVehicleId===detail.dataset.detail?null:detail.dataset.detail;renderVehicleDetails();return;}
+ const edit=e.target.closest("[data-vehicle-edit]");
+ if(edit){showVehicleForm(edit.dataset.vehicleEdit);return;}
+ const update=e.target.closest("[data-vehicle]");
+ if(update){$("maintVehicle").value=update.dataset.vehicle;maintenanceValues();$("maintenanceForm").scrollIntoView({behavior:"smooth",block:"center"});$("miles").focus();}
+});
+$("maintenanceForm").addEventListener("submit",e=>{
+ e.preventDefault();const v=getV($("maintVehicle").value);if(!v)return;
+ const miles=Number($("miles").value),due=Number($("due").value),interval=Number($("interval").value);
+ if(![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)return alert(translate("Verifica los valores del millaje."));
+ if(v.miles===miles&&v.due===due&&v.interval===interval)return alert(translate("No hay cambios para guardar."));
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,due,interval}:item);
+ const record={id:Date.now(),vehicle:v.id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)};
+ if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
+ alert(translate("Millaje guardado en la demostración."));
+});
+$("oilChanged").addEventListener("click",()=>{
+ const v=getV($("maintVehicle").value);if(!v)return;
+ const miles=Number($("miles").value),interval=Number($("interval").value);
+ if(!Number.isSafeInteger(miles)||miles<0||!Number.isSafeInteger(interval)||interval<1)return alert(translate("Verifica el millaje y el intervalo."));
+ const due=miles+interval;
+ if(!Number.isSafeInteger(due))return alert(translate("El millaje y el intervalo producen un valor demasiado grande."));
+ if(!confirm(translate("¿Registrar el cambio de aceite de {vehicle} a las {mileage} millas?",{vehicle:v.id,mileage:commas(miles)})))return;
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,interval,due}:item);
+ const record={id:Date.now(),vehicle:v.id,type:"Cambio de aceite",miles,due,date:new Date().toISOString().slice(0,10)};
+ if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
+ alert(translate("Nuevo cambio programado para {mileage} millas.",{mileage:commas(due)}));
+});
+$("damageForm").addEventListener("submit",e=>{
+ e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
+ const damage={id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:new Date().toISOString().slice(0,10)};
+ if(!commit({...data,damages:[...data.damages,damage]}))return;
+ e.target.reset();alert(translate("Avería registrada en la demo."));
+});
+$("damages").addEventListener("click",e=>{
+ const button=e.target.closest("button[data-repair-index]");if(!button)return;
+ const index=Number(button.dataset.repairIndex),damage=data.damages[index];
+ if(!damage||damage.repaired===true)return;
+ const damages=data.damages.map((d,i)=>i===index?{...d,repaired:true}:d);
+ if(!commit({...data,damages}))return;
+ const status=$("damage-status-"+index);if(status)status.focus();
+});
+$("partsForm").addEventListener("submit",e=>{
+ e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
+ const q=v.year+" "+v.name+" "+v.engine+" "+part;
+ const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
+ const target=$("partsResults");target.replaceChildren();const p=document.createElement("p");
+ p.textContent=translate("Búsquedas preparadas para {query}",{query:q});target.append(p);
+ urls.forEach(([name,url])=>{const a=document.createElement("a");a.className="shop";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=translate("Buscar en {store} ↗",{store:name});target.append(a);});
+});
+$("expenseForm").addEventListener("submit",e=>{
+ e.preventDefault();const cost=Number($("expenseCost").value),details=$("expenseDetails").value.trim();
+ if(!Number.isFinite(cost)||cost<=0||!details)return;
+ const expense={id:Date.now(),vehicle:$("expenseVehicle").value,type:$("expenseType").value,cost,details,date:new Date().toISOString().slice(0,10)};
+ if(!commit({...data,expenses:[...data.expenses,expense]}))return;
+ e.target.reset();alert(translate("Gasto registrado en la demo."));
+});
+$("resetDemo").addEventListener("click",()=>{
+ if(!confirm(translate("¿Restaurar todos los datos ficticios?")))return;
+ if(!commit(copy(initial)))return;
+ selectedVehicleId=null;hideVehicleForm();renderVehicleDetails();$("partsResults").replaceChildren();
+});
 localizePage();
 render();
 })();
