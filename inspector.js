@@ -75,7 +75,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./realvan.js?v=transit-original-lights-v4");
+  const {mountVan3D}=await import("./realvan.js?v=transit-visual-polish-v5");
   if(token!==loadToken)return;
   const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
@@ -102,9 +102,9 @@ async function open(id){
   viewer=loadedViewer;
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
-  const lightStatus=viewer.originalFrontLamps>=4 && viewer.originalRearLamps>=8
-    ? t(" · Focos originales integrados · v4"," · Original built-in headlights · v4")
-    : t(" · Versión antigua: recarga la página."," · Older version: reload the page.");
+  const lightStatus=viewer.originalFrontLamps===6 && viewer.originalRearLamps===9
+    ? t(" · Focos y gráficos refinados · v5"," · Refined lights and graphics · v5")
+    : t(" · Versión anterior: recarga la página."," · Older version: reload the page.");
   $("inspectorStatus").textContent=viewer.quality==="basic"
     ? t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.")
     : t("Ford Transit 2020 lista. Rojo: daño pendiente; verde: reparado.", "2020 Ford Transit ready. Red: pending damage; green: repaired.")+lightStatus;
