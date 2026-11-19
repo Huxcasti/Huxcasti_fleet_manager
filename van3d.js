@@ -50,7 +50,7 @@ export function mountVan3D(stage, options) {
   const roofPaint = new THREE.MeshStandardMaterial({ color: 0x32485b, metalness: 0.35, roughness: 0.43 });
   const metal = new THREE.MeshStandardMaterial({ color: 0x8a929c, metalness: 0.7, roughness: 0.28 });
   const darkMetal = new THREE.MeshStandardMaterial({ color: 0x202b34, metalness: 0.16, roughness: 0.76 });
-  const bumper = new THREE.MeshStandardMaterial({ color: 0x171f28, metalness: 0.1, roughness: 0.8 });
+  const bumper = new THREE.MeshStandardMaterial({ color: 0x171f28, metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide });
   const glass = new THREE.MeshStandardMaterial({ color: 0x122c40, metalness: 0.3, roughness: 0.22, side: THREE.DoubleSide });
   const glassGlint = new THREE.MeshBasicMaterial({ color: 0x9bc3dd, transparent: true, opacity: 0.19, side: THREE.DoubleSide, depthWrite: false });
   const rubber = new THREE.MeshStandardMaterial({ color: 0x131a1e, metalness: 0.0, roughness: 0.98 });
@@ -124,8 +124,8 @@ export function mountVan3D(stage, options) {
       [width, y1, z1], [width, y2, z2]
     ], material);
   }
-  frontGlass(1.51, 2.47, 2.435, 1.77, 0.90, bumper);
-  frontGlass(1.59, 2.40, 2.455, 1.784, 0.855, glass);
+  frontGlass(1.51, 2.47, 2.530, 1.94, 0.90, bumper);
+  frontGlass(1.59, 2.40, 2.548, 1.98, 0.855, glass);
   // Sunlight reflection across windshield (visual only).
   quad([
     [-0.82,2.35,1.839],[-0.77,2.19,1.970],
@@ -334,7 +334,8 @@ export function mountVan3D(stage, options) {
       -(e.clientY - rect.top) / rect.height * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
     const markerHits = raycaster.intersectObjects(markers, false);
-    if (markerHits.length) {
+    const bodyHits = raycaster.intersectObjects(pickable, false);
+    if (markerHits.length && (!bodyHits.length || markerHits[0].distance < bodyHits[0].distance + 0.10)) {
       if (typeof options.onMarker === "function") options.onMarker(markerHits[0].object.userData.damage);
       return;
     }
