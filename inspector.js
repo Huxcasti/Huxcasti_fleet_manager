@@ -63,7 +63,7 @@ async function open(id){
  document.body.style.overflow="hidden";
  overlay.hidden=false;
  $("inspectorTitle").textContent=t("Inspección 3D","3D inspection")+" · "+id;
- $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Modelo ilustrativo, no réplica exacta","Illustrative model, not an exact replica");
+ $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Referencia 3D Ford Transit estilo Prime; no es una réplica exacta","Prime-style Ford Transit 3D reference; not an exact replica");
  $("inspectorStatus").textContent=t("Cargando guagua 3D…","Loading 3D van…");
  $("inspectorDetail").hidden=true;
  $("inspectorSelection").hidden=true;
