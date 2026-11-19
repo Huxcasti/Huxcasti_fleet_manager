@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-// Procedural, illustrative delivery van. No licensed vehicle mesh or branding.
+// Procedural Ford Transit-inspired, Amazon Prime-style illustrative van. No exact replica.
 export function mountVan3D(stage, options) {
   if (!stage) throw new Error("3D stage missing");
   const en = options.language === "en";
@@ -42,82 +42,240 @@ export function mountVan3D(stage, options) {
   scene.add(van);
   const pickable = [];
   const markers = [];
-  const navy = new THREE.MeshStandardMaterial({ color: 0x1e3d63, metalness: 0.25, roughness: 0.5 });
-  const metal = new THREE.MeshStandardMaterial({ color: 0x738ca5, metalness: 0.65, roughness: 0.38 });
-  const deep = new THREE.MeshStandardMaterial({ color: 0x142333, metalness: 0.2, roughness: 0.55 });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x1b354c, metalness: 0.22, roughness: 0.16 });
-  const tire = new THREE.MeshStandardMaterial({ color: 0x131a24, roughness: 0.95 });
-  const trim = new THREE.MeshStandardMaterial({ color: 0x59c3ef, metalness: 0.3, roughness: 0.45 });
-  const white = new THREE.MeshStandardMaterial({ color: 0xe5f1fc, emissive: 0x314b64, emissiveIntensity: 0.15 });
-  const red = new THREE.MeshStandardMaterial({ color: 0xec4352, emissive: 0xb91b2d, emissiveIntensity: 0.35 });
-  function box(x, y, z, w, h, d, material, selectable) {
+
+  // Reference: high-roof Amazon Prime Ford Transit. All dimensions are
+  // approximate and intentionally keep the old demo's coordinate system so
+  // already-saved damage positions remain usable.
+  const paint = new THREE.MeshStandardMaterial({ color: 0x273b4d, metalness: 0.45, roughness: 0.38 });
+  const roofPaint = new THREE.MeshStandardMaterial({ color: 0x32485b, metalness: 0.35, roughness: 0.43 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0x8a929c, metalness: 0.7, roughness: 0.28 });
+  const darkMetal = new THREE.MeshStandardMaterial({ color: 0x202b34, metalness: 0.16, roughness: 0.76 });
+  const bumper = new THREE.MeshStandardMaterial({ color: 0x171f28, metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide });
+  const glass = new THREE.MeshStandardMaterial({ color: 0x122c40, metalness: 0.3, roughness: 0.22, side: THREE.DoubleSide });
+  const glassGlint = new THREE.MeshBasicMaterial({ color: 0x9bc3dd, transparent: true, opacity: 0.19, side: THREE.DoubleSide, depthWrite: false });
+  const rubber = new THREE.MeshStandardMaterial({ color: 0x131a1e, metalness: 0.0, roughness: 0.98 });
+  const lamps = new THREE.MeshStandardMaterial({ color: 0xe6f2f9, emissive: 0x7f91aa, emissiveIntensity: 0.28, roughness: 0.27 });
+  const signals = new THREE.MeshStandardMaterial({ color: 0xeea34c, emissive: 0x7f3c04, emissiveIntensity: 0.16 });
+  const tailLamps = new THREE.MeshStandardMaterial({ color: 0xd3263f, emissive: 0x801223, emissiveIntensity: 0.26 });
+  const linePaint = new THREE.MeshStandardMaterial({ color: 0x101e2b, roughness: 0.83 });
+  const white = new THREE.MeshBasicMaterial({ color: 0xf8fbff, side: THREE.DoubleSide });
+
+  function add(mesh, selectable = false) {
+    van.add(mesh);
+    if (selectable) pickable.push(mesh);
+    return mesh;
+  }
+  function box(x, y, z, w, h, d, material, selectable = false) {
     const item = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     item.position.set(x, y, z);
-    van.add(item);
-    if (selectable !== false) pickable.push(item);
-    return item;
+    return add(item, selectable);
   }
-  // Body, cabin, roof and bumpers
-  box(0, 1.67, -0.55, 2.04, 2.36, 3.72, navy);
-  box(0, 1.35, 1.63, 2.02, 1.75, 1.58, navy);
-  box(0, 2.84, -0.54, 1.99, 0.10, 3.64, navy);
-  box(0, 2.26, 1.73, 1.94, 0.10, 1.46, navy);
-  box(0, 0.49, 0, 1.92, 0.19, 4.8, deep);
-  box(0, 0.64, 2.47, 2.11, 0.27, 0.24, deep);
-  box(0, 0.64, -2.49, 2.1, 0.27, 0.25, deep);
-  // Windshield, front grille, lamps, rear doors
-  box(0, 1.83, 2.429, 1.76, 0.83, 0.026, glass, false);
-  box(0, 0.95, 2.435, 1.15, 0.36, 0.036, deep, false);
+  function sphere(x, y, z, sx, sy, sz, material) {
+    const item = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), material);
+    item.position.set(x, y, z);
+    item.scale.set(sx, sy, sz);
+    return add(item);
+  }
+  // Shaped high roof and sloping cab, extruded across its width rather than
+  // overlapping boxes. Positive Z is the front; the vehicle points toward +Z.
+  const outline = new THREE.Shape();
+  outline.moveTo(-2.52, 0.73);
+  outline.lineTo(2.51, 0.73);
+  outline.lineTo(2.51, 2.54);
+  outline.quadraticCurveTo(2.51, 2.81, 2.31, 2.87);
+  outline.quadraticCurveTo(1.95, 2.93, 1.63, 2.92);
+  outline.lineTo(-1.10, 2.92);
+  outline.quadraticCurveTo(-1.30, 2.90, -1.45, 2.64);
+  outline.lineTo(-2.08, 2.35);
+  outline.quadraticCurveTo(-2.24, 2.25, -2.34, 1.88);
+  outline.lineTo(-2.52, 1.34);
+  outline.closePath();
+  const transitBody = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(outline, {
+      depth: 1.91, steps: 1, curveSegments: 12, bevelEnabled: true,
+      bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 2
+    }), paint
+  );
+  transitBody.rotation.y = Math.PI / 2;
+  transitBody.position.x = -0.955;
+  add(transitBody, true);
+
+  // Distinct high-roof crown and stamped side roof strip.
+  box(0, 2.879, -0.54, 1.91, 0.055, 3.61, roofPaint);
   for (const side of [-1, 1]) {
-    box(side * 0.81, 0.94, 2.445, 0.24, 0.22, 0.04, white, false);
-    box(side * 0.86, 1.91, 1.82, 0.035, 0.73, 1.0, glass, false);
-    box(side * 1.04, 1.68, 1.68, 0.06, 0.70, 1.13, glass, false);
-    box(side * 1.06, 1.30, -0.80, 0.06, 0.045, 2.32, trim, false);
-    box(side * 1.066, 1.63, -1.02, 0.045, 1.78, 0.035, deep, false);
-    box(side * 1.063, 1.5, 0.16, 0.045, 1.5, 0.028, deep, false);
-    box(side * 1.091, 1.47, 0.35, 0.06, 0.08, 0.28, metal, false);
-    box(side * 1.10, 1.08, 1.91, 0.25, 0.12, 0.25, deep, false);
-    box(side * 1.09, 0.63, -2.37, 0.13, 0.38, 0.1, red, false);
-    box(side * 0.68, 0.95, -2.422, 0.10, 1.96, 0.03, deep, false);
-    box(side * 0.73, 1.24, -2.452, 0.10, 0.10, 0.03, metal, false);
-    // Four wheels, discs and axles
-    for (const z of [-1.52, 1.54]) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.24, 30), tire);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(side * 1.09, 0.48, z);
-      van.add(wheel);
-      pickable.push(wheel);
-      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.258, 24), metal);
-      hub.rotation.z = Math.PI / 2;
-      hub.position.set(side * 1.105, 0.48, z);
-      van.add(hub);
+    box(side * 1.03, 2.66, -0.45, 0.032, 0.037, 3.68, roofPaint);
+  }
+
+  // Windows are polygons sloping with the windshield / cab.
+  function quad(points, material, selectable = false) {
+    const coords = [];
+    for (const point of points) coords.push(...point);
+    const mesh = new THREE.Mesh(
+      new THREE.BufferGeometry(), material
+    );
+    mesh.geometry.setAttribute("position", new THREE.Float32BufferAttribute(coords, 3));
+    mesh.geometry.setIndex([0, 1, 2, 0, 2, 3]);
+    mesh.geometry.computeVertexNormals();
+    return add(mesh, selectable);
+  }
+  function frontGlass(y1, y2, z1, z2, width, material) {
+    return quad([
+      [-width, y2, z2], [-width, y1, z1],
+      [width, y1, z1], [width, y2, z2]
+    ], material);
+  }
+  frontGlass(1.51, 2.47, 2.530, 1.94, 0.90, bumper);
+  frontGlass(1.59, 2.40, 2.548, 1.98, 0.855, glass);
+  // Sunlight reflection across windshield (visual only).
+  quad([
+    [-0.82,2.35,1.839],[-0.77,2.19,1.970],
+    [0.17,2.19,1.970],[0.08,2.35,1.839]
+  ], glassGlint);
+  // Windshield wipers; vertical dark strokes visible in front-quarter view.
+  for (const side of [-1,1]) {
+    const blade = box(side * 0.41,1.66,2.40,0.68,0.024,0.028,bumper);
+    blade.rotation.z = side * 0.08;
+  }
+  // Hood edge, Transit-style black grille and inset oval badge.
+  box(0,1.49,2.42,1.65,0.085,0.11,paint);
+  box(0,1.075,2.514,1.47,0.39,0.045,bumper);
+  box(0,1.075,2.538,1.26,0.29,0.026,linePaint);
+  for (let j=0;j<5;j++) box(0,0.98+j*0.054,2.558,1.11,0.012,0.019,darkMetal);
+  const oval = new THREE.Mesh(new THREE.SphereGeometry(1,24,12),metal);
+  oval.scale.set(0.23,0.115,0.025);
+  oval.position.set(0,1.195,2.565);
+  add(oval);
+  const ovalCenter = new THREE.Mesh(new THREE.SphereGeometry(1,24,12),
+    new THREE.MeshBasicMaterial({color:0x153f6b}));
+  ovalCenter.scale.set(0.206,0.09,0.027);
+  ovalCenter.position.set(0,1.195,2.589);
+  add(ovalCenter);
+  box(0,0.67,2.53,2.08,0.27,0.20,bumper);
+  box(0,0.51,2.55,1.24,0.10,0.12,darkMetal);
+  // Low floor, realistic sliding step and rear rubber bumper.
+  box(0,0.51,-0.06,1.80,0.16,4.66,bumper);
+  box(0,0.64,-2.51,2.03,0.25,0.22,bumper);
+  box(0,0.48,-2.63,1.65,0.055,0.42,darkMetal);
+
+  function sideShape(points, x, material) {
+    const path = new THREE.Shape();
+    points.forEach((p,i)=>i ? path.lineTo(-p[0],p[1]) : path.moveTo(-p[0],p[1]));
+    path.closePath();
+    const panel = new THREE.Mesh(new THREE.ShapeGeometry(path, 6), material);
+    panel.rotation.y = Math.PI / 2;
+    panel.position.x = x;
+    add(panel);
+    return panel;
+  }
+  for (const side of [-1,1]) {
+    const x = side * 1.045;
+    // Cab door window; the cargo section intentionally has no glass.
+    const windowPts = [[2.07,1.75],[1.69,2.32],[0.76,2.33],[0.76,1.73]];
+    sideShape(windowPts,x+side*0.008,bumper);
+    sideShape([[2.01,1.77],[1.66,2.27],[0.82,2.27],[0.82,1.77]],x+side*0.018,glass);
+    // Top-down flare reflection.
+    sideShape([[1.70,2.21],[1.55,2.26],[0.89,2.26],[0.92,2.17]],x+side*0.023,glassGlint);
+    // Cabin and sliding door outlines / side trims.
+    box(x+side*0.012,1.36,0.70,0.016,1.26,0.027,linePaint);
+    box(x+side*0.012,1.59,-0.84,0.015,1.72,0.027,linePaint);
+    box(x+side*0.018,1.14,-1.82,0.026,0.05,1.10,roofPaint);
+    box(x+side*0.020,1.06,-0.28,0.026,0.12,1.80,bumper);
+    box(x+side*0.020,0.77,-0.43,0.036,0.17,2.00,darkMetal);
+    box(x+side*0.020,1.64,0.30,0.038,0.075,0.19,metal);
+    box(x+side*0.02,1.39,-0.60,0.042,0.08,0.21,metal);
+    box(x+side*0.06,1.32,2.06,0.18,0.22,0.25,bumper);
+    sphere(x+side*0.18,1.38,2.06,0.20,0.17,0.23,bumper);
+    // Subtle stamp lines and side reflectors.
+    box(x+side*0.020,1.53,-1.08,0.021,0.017,2.37,roofPaint);
+    box(x+side*0.019,1.13,1.96,0.045,0.11,0.15,signals);
+    box(x+side*0.020,0.77,-2.30,0.04,0.12,0.12,tailLamps);
+    // Wheel arches from raised body-colored rings.
+    for (const z of [1.48,-1.51]) {
+      const arch = new THREE.Mesh(new THREE.TorusGeometry(0.52,0.048,7,28,Math.PI),bumper);
+      arch.rotation.y = Math.PI / 2;
+      arch.position.set(side*1.067,0.49,z);
+      add(arch);
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.475,0.475,0.27,32),rubber);
+      wheel.rotation.z = Math.PI/2;
+      wheel.position.set(side*1.06,0.46,z);
+      add(wheel,true);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.278,0.278,0.278,24),metal);
+      hub.rotation.z = Math.PI/2;
+      hub.position.set(side*1.065,0.46,z);
+      add(hub);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.148,0.148,0.283,22),darkMetal);
+      cap.rotation.z = Math.PI/2;
+      cap.position.set(side*1.068,0.46,z);
+      add(cap);
+      for(let bolt=0;bolt<6;bolt++) {
+        const a=bolt*Math.PI/3;
+        sphere(side*1.212,0.46+Math.cos(a)*0.21,z+Math.sin(a)*0.21,0.024,0.024,0.024,darkMetal);
+      }
     }
   }
-  box(0, 1.87, -2.425, 0.025, 1.85, 0.028, deep, false);
-  box(0, 2.68, -2.426, 1.76, 0.26, 0.025, glass, false);
-  box(0, 0.91, -2.465, 1.35, 0.13, 0.035, metal, false);
-  // Stylized delivery-company graphics on both sides
-  const decalCanvas = document.createElement("canvas");
-  decalCanvas.width = 512;
-  decalCanvas.height = 256;
-  const ctx = decalCanvas.getContext("2d");
-  if (ctx) {
-    ctx.clearRect(0, 0, 512, 256);
-    ctx.fillStyle = "#b0eaff";
-    ctx.font = "bold 97px Arial";
-    ctx.fillText("WILX", 33, 123);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 39px Arial";
-    ctx.fillText("LOGISTICS", 35, 174);
-    const decal = new THREE.CanvasTexture(decalCanvas);
-    decal.colorSpace = THREE.SRGBColorSpace;
-    const ink = new THREE.MeshBasicMaterial({ map: decal, transparent: true, side: THREE.DoubleSide, depthWrite: false });
-    for (const side of [-1, 1]) {
-      const tag = new THREE.Mesh(new THREE.PlaneGeometry(1.48, 0.74), ink);
-      tag.position.set(side * 1.05, 1.88, -0.61);
-      tag.rotation.y = side * Math.PI / 2;
-      van.add(tag);
+  // Rear double cargo doors, hinges, long taillights and step bumper.
+  box(0,1.8,-2.545,0.022,1.99,0.033,bumper);
+  box(0,2.64,-2.548,1.71,0.035,0.031,roofPaint);
+  for(const side of [-1,1]){
+    box(side*0.89,1.63,-2.54,0.06,2.07,0.06,tailLamps);
+    box(side*0.89,1.28,-2.578,0.055,0.36,0.04,lamps);
+    for(const h of [1.18,2.34])box(side*0.94,h,-2.555,0.14,0.11,0.16,metal);
+    box(side*0.36,1.35,-2.565,0.22,0.10,0.042,bumper);
+  }
+  box(0,1.12,-2.570,0.12,0.17,0.05,bumper);
+  box(0,0.71,-2.650,0.75,0.21,0.045,darkMetal);
+  // High roof marker lamps.
+  for(const x of [-0.72,0,0.72])sphere(x,2.88,1.02,0.08,0.037,0.08,lamps);
+
+  // Prime-style decals are drawn from scratch as textures, not taken from any photo.
+  function makeLogo(width,height,sideLogo){
+    const canvas=document.createElement("canvas");
+    canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return null;
+    ctx.clearRect(0,0,width,height);
+    ctx.lineCap="round";
+    if(sideLogo){
+      // Long blue smile-and-arrow and small white "prime".
+      ctx.beginPath();
+      ctx.moveTo(56,188);
+      ctx.bezierCurveTo(230,340,550,365,820,166);
+      ctx.strokeStyle="#04a7ee";ctx.lineWidth=40;ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(755,172);ctx.lineTo(850,130);ctx.lineTo(816,236);
+      ctx.strokeStyle="#04a7ee";ctx.lineWidth=25;ctx.lineJoin="round";ctx.stroke();
+      ctx.fillStyle="#f7fcff";
+      ctx.font="bold 111px Arial,sans-serif";
+      ctx.fillText("prime",680,115);
+    }else{
+      ctx.fillStyle="#ffffff";
+      ctx.font="bold 104px Arial,sans-serif";
+      ctx.textAlign="center";
+      ctx.fillText("amazon",width/2,height/2+8);
+      ctx.beginPath();
+      ctx.moveTo(width*0.29,height*0.65);
+      ctx.quadraticCurveTo(width*0.53,height*0.82,width*0.73,height*0.63);
+      ctx.strokeStyle="#ffffff";ctx.lineWidth=10;ctx.stroke();
     }
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    return new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide,depthWrite:false});
+  }
+  const sideLogo=makeLogo(1024,430,true);
+  if(sideLogo){
+    for(const side of [-1,1]){
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.94,0.88),sideLogo);
+      mesh.rotation.y=side*Math.PI/2;
+      mesh.position.set(side*1.071,2.03,-0.95);
+      add(mesh);
+    }
+  }
+  const rearLogo=makeLogo(640,290,false);
+  if(rearLogo){
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.74,0.79),rearLogo);
+    mesh.rotation.y=Math.PI;
+    mesh.position.set(0,1.96,-2.589);
+    add(mesh);
   }
 
   const raycaster = new THREE.Raycaster();
@@ -176,7 +334,8 @@ export function mountVan3D(stage, options) {
       -(e.clientY - rect.top) / rect.height * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
     const markerHits = raycaster.intersectObjects(markers, false);
-    if (markerHits.length) {
+    const bodyHits = raycaster.intersectObjects(pickable, false);
+    if (markerHits.length && (!bodyHits.length || markerHits[0].distance < bodyHits[0].distance + 0.10)) {
       if (typeof options.onMarker === "function") options.onMarker(markerHits[0].object.userData.damage);
       return;
     }
@@ -193,11 +352,9 @@ export function mountVan3D(stage, options) {
       preview.geometry.dispose();
       preview.material.dispose();
     }
+    setMarkMode(false);
     preview = marker(new THREE.Vector3(location.x, location.y, location.z), 0xffc93d, 0.14);
     if (typeof options.onPick === "function") options.onPick(location);
-    setMarkMode(false);
-    // Keep the selected yellow position visible until a new selection or close
-    preview = marker(new THREE.Vector3(location.x, location.y, location.z), 0xffc93d, 0.14);
   }
   function resize() {
     const width = Math.max(240, stage.clientWidth || 600);
