@@ -75,7 +75,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./realvan.js?v=prime-arrow-clean-v8");
+  const {mountVan3D}=await import("./realvan.js?v=prime-word-spacing-v9");
   if(token!==loadToken)return;
   const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
@@ -103,7 +103,7 @@ async function open(id){
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
   const lightStatus=viewer.originalFrontLamps===6 && viewer.originalRearLamps===9
-    ? t(" · Flecha Prime corregida · v8"," · Prime arrow shape fixed · v8")
+    ? t(" · Palabra Prime separada de la flecha · v9"," · Prime text clear of arrow · v9")
     : t(" · Versión anterior: recarga la página."," · Older version: reload the page.");
   $("inspectorStatus").textContent=viewer.quality==="basic"
     ? t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.")
