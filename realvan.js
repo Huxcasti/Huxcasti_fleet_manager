@@ -115,24 +115,31 @@ function revealOriginalLights(root) {
   });
   obj.material=Array.isArray(obj.material)?mats:mats[0];
   obj.renderOrder=name.startsWith("indicator_")||name.startsWith("reversinglight")?8:7;
-  (isFront?front:rear).push({mesh:obj,materials:mats});
+  // +X corresponds to the model's left lights, -X to right lights.
+  // Keep the distant side from showing through opaque body panels.
+  const side=/(_l$|_lf$|_lr$|_1$)/.test(name)?1:
+             /(_r$|_rf$|_rr$|_2$)/.test(name)?-1:0;
+  (isFront?front:rear).push({mesh:obj,materials:mats,side});
  });
  const smooth=(v,min,max)=>{
   const t=THREE.MathUtils.clamp((v-min)/(max-min),0,1);
   return t*t*(3-2*t);
  };
  function update(cameraX,cameraZ) {
-  const angle= cameraZ/Math.max(0.001,Math.hypot(cameraX,cameraZ));
-  const frontOpacity=smooth(angle,0.35,0.82);
-  const rearOpacity=smooth(-angle,0.35,0.82);
-  for (const entry of front){
-   entry.mesh.visible=frontOpacity>0.015;
-   entry.materials.forEach(mat=>{mat.opacity=frontOpacity;});
+  const distance=Math.max(0.001,Math.hypot(cameraX,cameraZ));
+  const frontness=cameraZ/distance, sideness=cameraX/distance;
+  const frontOpacity=smooth(frontness,0.35,0.82);
+  const rearOpacity=smooth(-frontness,0.35,0.82);
+  function apply(entries,endOpacity) {
+   for (const entry of entries) {
+    const sideOpacity=entry.side===0?1:smooth(entry.side*sideness,-0.55,0.05);
+    const opacity=endOpacity*sideOpacity;
+    entry.mesh.visible=opacity>0.015;
+    entry.materials.forEach(mat=>{mat.opacity=opacity;});
+   }
   }
-  for (const entry of rear){
-   entry.mesh.visible=rearOpacity>0.015;
-   entry.materials.forEach(mat=>{mat.opacity=rearOpacity;});
-  }
+  apply(front,frontOpacity);
+  apply(rear,rearOpacity);
  }
  return {frontCount:front.length,rearCount:rear.length,update};
 }
