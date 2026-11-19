@@ -75,7 +75,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./realvan.js?v=ford-lights-20261119-v2");
+  const {mountVan3D}=await import("./realvan.js?v=transit-lenses-arrow-20261119-v3");
   if(token!==loadToken)return;
   const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
@@ -102,9 +102,9 @@ async function open(id){
   viewer=loadedViewer;
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
-  const lightStatus=Number.isInteger(viewer.lightsApplied)
-    ? t(" · Focos actualizados: "," · Updated lights: ")+viewer.lightsApplied+"/15 · v2"
-    : t(" · Visor anterior: vuelve a cargar."," · Older viewer: reload.");
+  const lightStatus=viewer.visibleLightAssemblies===4 && viewer.rearAmazonArrow===true
+    ? t(" · Focos visibles: 4/4 · Flecha Amazon · v3"," · Visible lamps: 4/4 · Amazon arrow · v3")
+    : t(" · Versión antigua: recarga la página."," · Older version: reload the page.");
   $("inspectorStatus").textContent=viewer.quality==="basic"
     ? t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.")
     : t("Ford Transit 2020 lista. Rojo: daño pendiente; verde: reparado.", "2020 Ford Transit ready. Red: pending damage; green: repaired.")+lightStatus;
