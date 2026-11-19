@@ -500,7 +500,7 @@ function maintenanceValues(){const v=getV($("maintVehicle").value);if(v){$("mile
 let selectedVehicleId=null;
 let editingVehicleId=null;
 const statusOf = id => data.damages.some(d => d.vehicle===id && d.repaired!==true) ? "En reparación" : "Disponible";
-const dateLabel = date => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(date)) ?
+const dateLabel = date => /^\d{4}-\d{2}-\d{2}$/.test(String(date)) ?
   new Date(date+"T12:00:00").toLocaleDateString(locale) : translate(String(date||"Ejemplo"));
 const countAndCost = id => {
   const items=data.expenses.filter(e=>e.vehicle===id);
