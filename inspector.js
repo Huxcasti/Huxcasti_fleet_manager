@@ -75,7 +75,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./realvan.js?v=transit-visual-polish-v5");
+  const {mountVan3D}=await import("./realvan.js?v=prime-arrow-spacing-v6");
   if(token!==loadToken)return;
   const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
@@ -103,7 +103,7 @@ async function open(id){
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
   const lightStatus=viewer.originalFrontLamps===6 && viewer.originalRearLamps===9
-    ? t(" · Focos y gráficos refinados · v5"," · Refined lights and graphics · v5")
+    ? t(" · Focos y logo Prime ajustados · v6"," · Lights and Prime logo adjusted · v6")
     : t(" · Versión anterior: recarga la página."," · Older version: reload the page.");
   $("inspectorStatus").textContent=viewer.quality==="basic"
     ? t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.")
