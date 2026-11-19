@@ -106,8 +106,15 @@ h2 { margin: 0 0 16px; font-size: 18px; line-height: 1.25; letter-spacing: -.018
 .stat:nth-child(2) { border-top-color: #1496a2; }
 .stat:nth-child(3) { border-top-color: #8199b5; }
 .stat:nth-child(4) { border-top-color: #b6701b; }
-.stat label { color: var(--muted); font-size: 12px; font-weight: 750; }
+.stat .stat-label { color: var(--muted); font-size: 12px; font-weight: 750; display:block; margin-bottom:6px; }
 .stat b { display: block; font-size: 28px; font-variant-numeric: tabular-nums; }
+.stat.stat-button { width:100%; display:block; font:inherit; color:#112843; text-align:left; cursor:pointer; min-height:104px; transition: background .15s, box-shadow .15s, border-color .15s; }
+.stat.stat-button:hover { background:#f0f7ff; box-shadow:0 5px 20px #173b6020; }
+.stat.stat-button[aria-pressed="true"] { background:#e8f4ff; outline:2px solid #1479c7; outline-offset:0; }
+.stat.stat-button:focus-visible { outline:3px solid #1479c7; outline-offset:3px; }
+.fleet-filter-status { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; margin:11px 0 14px; background:#eef7ff; border:1px solid #c5ddf5; border-radius:10px; color:#164978; font-size:13px; font-weight:700; }
+.fleet-filter-status .btn { margin:0; }
+#fleetListPanel { scroll-margin-top:16px; }
 .cols { display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr); align-items: start; gap: 0 16px; }
 .panel { min-width: 0; margin-bottom: 16px; }
 .vehicle, .entry { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #e1eaf5; }
@@ -305,7 +312,14 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <section class="page" id="page-flota">
 <div class="stats" id="stats"></div>
 <div class="cols">
-<div class="panel"><h2 data-translate>Mis vehículos</h2><div id="vehicleList"></div></div>
+<div class="panel" id="fleetListPanel">
+ <h2 data-translate>Mis vehículos</h2>
+ <div id="fleetFilterStatus" class="fleet-filter-status" role="status" aria-live="polite" hidden>
+  <span id="fleetFilterText"></span>
+  <button class="btn secondary" id="clearFleetFilter" type="button" data-translate>Ver todas</button>
+ </div>
+ <div id="vehicleList"></div>
+</div>
 <div class="panel"><h2 data-translate>Alertas de mantenimiento</h2><div class="note warning" data-translate>Aviso cuando faltan 500 millas o menos para el aceite, según el millaje registrado.</div><div id="alerts"></div></div>
 </div>
 
@@ -599,6 +613,9 @@ Object.assign(english, {
 
 // Simpler odometer and oil-service workflow; all dynamic text is bilingual.
 Object.assign(english, {
+  "Ver todas": "Show all",
+  "Mostrando {count} de {total} vehículos: {filter}": "Showing {count} of {total} vehicles: {filter}",
+  "No hay vehículos en esta categoría.": "No vehicles in this category.",
   "Datos iniciales de mantenimiento": "Initial maintenance setup",
   "Solo al crear la guagua: indica el millaje actual y el último cambio de aceite. Calcularemos automáticamente el próximo.": "When adding a vehicle, enter its mileage and last oil change mileage. The next service is calculated automatically.",
   "Millaje inicial": "Starting mileage",
@@ -775,6 +792,18 @@ function renderNewVehicleOilPreview(){
 
 let selectedVehicleId=null;
 let editingVehicleId=null;
+// The dashboard cards are filters, not independent navigation or stored data.
+// Recalculate memberships after every repair, oil service or fleet edit.
+let fleetFilter="all";
+const fleetFilterNames={all:"Guaguas",available:"Disponibles",repair:"En reparación",oil:"Aceite próximo"};
+function matchesFleetFilter(v) {
+ switch(fleetFilter){
+  case "available": return statusOf(v.id)==="Disponible";
+  case "repair": return statusOf(v.id)==="En reparación";
+  case "oil": return left(v)<=500;
+  default: return true;
+ }
+}
 const statusOf = id => data.damages.some(d => d.vehicle===id && d.repaired!==true) ? "En reparación" : "Disponible";
 const dateLabel = date => /^\d{4}-\d{2}-\d{2}$/.test(String(date)) ?
   new Date(date+"T12:00:00").toLocaleDateString(locale) : translate(String(date||"Ejemplo"));
@@ -786,9 +815,19 @@ function renderFlota() {
  const vehicles=data.vehicles;
  const late=vehicles.filter(vehicle=>left(vehicle)<=500);
  const available=vehicles.filter(v=>statusOf(v.id)==="Disponible").length;
- const stats=[["Guaguas",vehicles.length],["Disponibles",available],["En reparación",vehicles.length-available],["Aceite próximo",late.length]];
- $("stats").innerHTML=stats.map(pair=>'<div class="stat"><label>'+escaped(translate(pair[0]))+'</label><b>'+pair[1]+'</b></div>').join("");
- $("vehicleList").innerHTML=vehicles.length ? vehicles.map(v=>{
+ const stats=[["all","Guaguas",vehicles.length],["available","Disponibles",available],["repair","En reparación",vehicles.length-available],["oil","Aceite próximo",late.length]];
+ $("stats").innerHTML=stats.map(([id,label,count])=>
+  '<button class="stat stat-button" type="button" data-fleet-filter="'+id+'" aria-controls="vehicleList" aria-pressed="'+(fleetFilter===id)+'">'+
+  '<span class="stat-label">'+escaped(translate(label))+'</span><b>'+count+'</b></button>'
+ ).join("");
+ const filtered=vehicles.filter(matchesFleetFilter);
+ const showingFilter=fleetFilter!=="all";
+ $("fleetFilterStatus").hidden=!showingFilter;
+ $("fleetFilterText").textContent=showingFilter
+  ? translate("Mostrando {count} de {total} vehículos: {filter}",{
+     count:filtered.length,total:vehicles.length,filter:translate(fleetFilterNames[fleetFilter]||"Guaguas")
+    }) : "";
+ $("vehicleList").innerHTML=filtered.length ? filtered.map(v=>{
   const mileageLeft=left(v);
   const badge=mileageLeft<0?"danger":mileageLeft<=500?"warn":"";
   const service=mileageLeft<0?"Vencido":mileageLeft<=500?"Próximo":"Al día";
@@ -802,7 +841,7 @@ function renderFlota() {
    '<button class="btn secondary" type="button" data-vehicle-edit="'+escaped(v.id)+'">'+translate("Editar datos")+'</button>'+
    '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button>'+
    '<button class="btn delete-vehicle" type="button" data-vehicle-delete="'+escaped(v.id)+'" aria-label="'+escaped(translate("Eliminar vehículo"))+': '+escaped(v.id)+'">'+translate("Eliminar vehículo")+'</button></div></div>'+ (expanded?'<div class="vehicle-inline-detail" id="vehicle-inline-'+escaped(v.id)+'" role="region" aria-label="'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+'">'+vehicleDetailsMarkup(v)+'</div>':'')+'</div>';
- }).join("") : '<p class="muted">'+translate("No hay vehículos registrados.")+'</p>';
+ }).join("") : '<p class="muted">'+translate(vehicles.length?"No hay vehículos en esta categoría.":"No hay vehículos registrados.")+'</p>';
  $("alerts").innerHTML=late.length ? late.sort((a,b)=>left(a)-left(b)).map(v=>{
   const remaining=left(v),overdue=remaining<0;
   return '<div class="entry"><div><strong>'+escaped(v.id)+'</strong><p>'+escaped(v.name)+'</p></div>'+
@@ -1017,6 +1056,19 @@ function openPage(page){
  $("pageTitle").textContent=translate(titles[page]);
 }
 document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>openPage(tab.dataset.page)));
+$("stats").addEventListener("click",event=>{
+ const card=event.target.closest("button[data-fleet-filter]");
+ if(!card)return;
+ const requested=card.dataset.fleetFilter;
+ if(!Object.hasOwn(fleetFilterNames,requested))return;
+ fleetFilter=fleetFilter===requested && requested!=="all" ? "all" : requested;
+ renderFlota();
+ $("fleetListPanel").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("clearFleetFilter").addEventListener("click",()=>{
+ fleetFilter="all";
+ renderFlota();
+});
 $("newVehicle").addEventListener("click",()=>showVehicleForm());
 $("cancelVehicle").addEventListener("click",hideVehicleForm);
 $("vehicleForm").addEventListener("submit",e=>{
