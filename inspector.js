@@ -1,5 +1,3 @@
-import { mountVan3D } from "./van3d.js";
-
 const api = window.WILX3D;
 if (!api) throw new Error("Fleet integration not ready");
 const en = api.language === "en";
@@ -75,6 +73,7 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
+  const {mountVan3D}=await import("./van3d.js");
   if(token!==loadToken)return;
   viewer=mountVan3D($("inspectorStage"),{
    language:api.language,
