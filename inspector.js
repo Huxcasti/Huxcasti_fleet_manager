@@ -11,7 +11,8 @@ styles.textContent =
 ".inspector-canvas{width:100%;height:clamp(330px,51vh,530px);background:#eaf3fd;overflow:hidden;touch-action:none}.inspector-canvas canvas{display:block;touch-action:none}"+
 ".inspector-actions{display:flex;gap:8px;flex-wrap:wrap;padding:13px 18px 5px}.inspector-actions .btn{flex:1 1 145px}"+
 ".inspector-status{color:#315578;font-size:13px;line-height:1.5;margin:8px 18px 12px}.inspector-detail{margin:9px 18px;padding:12px;background:#eaf5ff;border:1px solid #c2ddf5;border-radius:10px;line-height:1.5;font-size:13px;overflow-wrap:anywhere}"+
-".inspector-help{color:#506d8d;font-size:12px;line-height:1.5;margin:10px 18px 17px}"+
+".inspector-help{color:#506d8d;font-size:12px;line-height:1.5;margin:10px 18px 10px}"+
+".inspector-credit{color:#5b748c;font-size:11px;margin:0 18px 17px;line-height:1.45}.inspector-credit a{color:#1b589e;text-decoration:underline}"+
 "@media(max-width:600px){.inspector-overlay{padding:0;align-items:stretch}.inspector-dialog{width:100%;max-height:100dvh;height:100dvh;border-radius:0;display:flex;flex-direction:column}.inspector-head{padding:11px 14px}.inspector-canvas{height:auto;min-height:260px;flex:1 1 47dvh}.inspector-actions{padding:10px 12px 3px}.inspector-detail{margin:8px 12px}.inspector-status,.inspector-help{margin:8px 12px}}";
 document.head.append(styles);
 
@@ -31,7 +32,8 @@ overlay.innerHTML =
 '<p id="inspectorStatus" class="inspector-status" role="status"></p>'+
 '<div id="inspectorDetail" class="inspector-detail" hidden></div>'+
 '<div id="inspectorSelection" class="inspector-detail" hidden></div>'+
-'<p class="inspector-help">'+t("Desliza un dedo para girar, pellizca para acercar y toca Marcar daño para colocar un punto sobre la guagua.","Drag to rotate, pinch to zoom, and select Mark damage to place a point on the van.")+'</p></div>';
+'<p class="inspector-help">'+t("Desliza un dedo para girar, pellizca para acercar y toca Marcar daño para colocar un punto sobre la guagua.","Drag to rotate, pinch to zoom, and select Mark damage to place a point on the van.")+'</p>'+
+'<p class="inspector-credit">Ford Transit 2020 · 3D: <a href="https://sketchfab.com/3d-models/2020-ford-transit-9801fbf49bfc456497495e45efa6df0c" target="_blank" rel="noopener noreferrer">tonielpro520 (Sketchfab)</a> · CC BY · '+t("Color y gráficos modificados para la demostración.","Paint and graphics modified for this demo.")+'</p></div>';
 document.body.append(overlay);
 
 const $ = id => document.getElementById(id);
@@ -63,7 +65,7 @@ async function open(id){
  document.body.style.overflow="hidden";
  overlay.hidden=false;
  $("inspectorTitle").textContent=t("Inspección 3D","3D inspection")+" · "+id;
- $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Guagua de reparto estilo Prime, modelo de referencia","Prime-style delivery van, reference model");
+ $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Modelo Ford Transit 2020 de referencia; puede diferir de esta unidad","Reference 2020 Ford Transit model; may differ from this unit");
  $("inspectorStatus").textContent=t("Cargando guagua 3D…","Loading 3D van…");
  $("inspectorDetail").hidden=true;
  $("inspectorSelection").hidden=true;
@@ -100,7 +102,7 @@ async function open(id){
   viewer=loadedViewer;
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
-  $("inspectorStatus").textContent=viewer.quality==="basic"?t("No se pudo cargar el modelo detallado. Se muestra la versión sencilla; intenta actualizar la página.", "Detailed model unavailable. The basic van is shown; try reloading.") : t("Modelo 3D detallado listo. Rojo: daño pendiente; verde: reparado.", "Detailed 3D model ready. Red: pending damage; green: repaired.");
+  $("inspectorStatus").textContent=viewer.quality==="basic"?t("No se pudo cargar la Ford Transit; se muestra la versión de respaldo.", "Ford Transit could not load; showing backup van.") : t("Ford Transit 2020 lista. Rojo: daño pendiente; verde: reparado.", "2020 Ford Transit ready. Red: pending damage; green: repaired.");
  }catch(error){
   if(token!==loadToken)return;
   console.error("3D inspection failed",error);
