@@ -124,17 +124,41 @@ function tintBody(root) {
   "int_plastic_black": {color:0x1d242c,roughness:0.83},
   "int_red_indicator": {color:0xb3353e,roughness:0.47}
  };
+ const lightParts = {
+  // Front lamp assemblies: frosted glass with a soft metallic reflector.
+  "headlight_l": {color:0xcddde8,metalness:0.22,roughness:0.18,emissive:0x7996b4,emissiveIntensity:0.18},
+  "headlight_r": {color:0xcddde8,metalness:0.22,roughness:0.18,emissive:0x7996b4,emissiveIntensity:0.18},
+  "extralight_1": {color:0xa4b6c7,metalness:0.30,roughness:0.20,emissive:0x647c91,emissiveIntensity:0.13},
+  "extralight_2": {color:0xa4b6c7,metalness:0.30,roughness:0.20,emissive:0x647c91,emissiveIntensity:0.13},
+  // Tall Ford Transit rear lenses and upper brake lamp.
+  "taillight_l": {color:0xc82335,roughness:0.18,emissive:0x8f0d1f,emissiveIntensity:0.24},
+  "taillight_r": {color:0xc82335,roughness:0.18,emissive:0x8f0d1f,emissiveIntensity:0.24},
+  "brakelight_l": {color:0xd52d3e,roughness:0.16,emissive:0x941222,emissiveIntensity:0.27},
+  "brakelight_r": {color:0xd52d3e,roughness:0.16,emissive:0x941222,emissiveIntensity:0.27},
+  "brakelight_m": {color:0xe33648,roughness:0.16,emissive:0xb01526,emissiveIntensity:0.30},
+  // Clear reverse lenses; turn signals are amber, not white.
+  "reversinglight_l": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
+  "reversinglight_r": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
+  "indicator_lf": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
+  "indicator_rf": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
+  "indicator_lr": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
+  "indicator_rr": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18}
+ };
+ // Source GLB reuses one "lights" material for brake, reverse, turn signals.
+ // Apply overrides per *mesh* before considering shared-material cache.
  const processed = new Map();
  root.traverse(obj => {
   if (!obj.isMesh || !obj.material) return;
   const original = Array.isArray(obj.material) ? obj.material : [obj.material];
   const converted = original.map(mat => {
    if (!mat || !mat.color) return mat;
-   if (processed.has(mat)) return processed.get(mat);
    const key = (mat.name || "").toLowerCase().replace(/\.\d+$/, "");
+   const meshName = (obj.name || "").toLowerCase().replace(/\.\d+$/, "");
+   const specialLight = lightParts[meshName];
    // Unrecognized materials are left alone, including user-added textures.
-   const look = looks[key];
+   const look = specialLight || looks[key];
    if (!look) return mat;
+   if (!specialLight && processed.has(mat)) return processed.get(mat);
    const clone = mat.clone();
    clone.color.setHex(look.color);
    clone.metalness = look.metalness ?? 0.08;
@@ -147,10 +171,10 @@ function tintBody(root) {
    }
    if (look.emissive && clone.emissive) {
     clone.emissive.setHex(look.emissive);
-    clone.emissiveIntensity = 0.08;
+    clone.emissiveIntensity = look.emissiveIntensity ?? 0.08;
    }
    clone.needsUpdate = true;
-   processed.set(mat, clone);
+   if (!specialLight) processed.set(mat, clone);
    return clone;
   });
   obj.material = Array.isArray(obj.material) ? converted : converted[0];
