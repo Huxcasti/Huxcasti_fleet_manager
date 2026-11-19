@@ -147,6 +147,7 @@ function tintBody(root) {
  // Source GLB reuses one "lights" material for brake, reverse, turn signals.
  // Apply overrides per *mesh* before considering shared-material cache.
  const processed = new Map();
+ const matchedLights = new Set();
  root.traverse(obj => {
   if (!obj.isMesh || !obj.material) return;
   const original = Array.isArray(obj.material) ? obj.material : [obj.material];
@@ -155,6 +156,7 @@ function tintBody(root) {
    const key = (mat.name || "").toLowerCase().replace(/\.\d+$/, "");
    const meshName = (obj.name || "").toLowerCase().replace(/\.\d+$/, "");
    const specialLight = lightParts[meshName];
+   if (specialLight) matchedLights.add(meshName);
    // Unrecognized materials are left alone, including user-added textures.
    const look = specialLight || looks[key];
    if (!look) return mat;
@@ -179,6 +181,7 @@ function tintBody(root) {
   });
   obj.material = Array.isArray(obj.material) ? converted : converted[0];
  });
+ return { lightsApplied: matchedLights.size, lightNames: [...matchedLights].sort() };
 }
 
 export async function mountVan3D(stage, options = {}) {
@@ -251,7 +254,7 @@ export async function mountVan3D(stage, options = {}) {
  const original = loaded.scene;
  // Real Ford Transit GLB: +Y up, +Z forward; approximately 2.56 x 2.71 x 6.64 m.
  // Old pins may appear offset, but new damage positions use this exact geometry.
- tintBody(original);
+ const lightDiagnostic = tintBody(original);
  van.add(original);
  original.updateMatrixWorld(true);
 
@@ -362,6 +365,8 @@ export async function mountVan3D(stage, options = {}) {
 
  return {
   quality:"detailed",
+  lightsApplied: lightDiagnostic.lightsApplied,
+  lightNames: lightDiagnostic.lightNames,
   source:"2020 Ford Transit by tonielpro520 — Sketchfab, CC Attribution",
   setMarkMode,
   resetView() {
