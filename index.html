@@ -677,7 +677,51 @@ const s=$(id),old=s.value;s.replaceChildren();
 data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.id+" · "+v.name+" "+v.year;s.append(o)});
 if(getV(old))s.value=old;
 })}
-function maintenanceValues(){const v=getV($("maintVehicle").value);if(v){$("miles").value=v.miles;$("due").value=v.due;$("interval").value=v.interval}}
+// Odometer values are independent of the next oil-service target.
+function maintenanceValues(){
+ const v=getV($("maintVehicle").value);
+ $("miles").value=v?String(v.miles):"";
+ $("interval").value=v?String(v.interval):"";
+ $("miles").min=v?String(v.miles):"0";
+ $("oilChanged").disabled=!v;
+ renderMileageSummary();
+ renderOilServicePreview();
+}
+function renderMileageSummary(){
+ const v=getV($("maintVehicle").value),target=$("mileageSummary");
+ if(!v){target.textContent=translate("No hay vehículos para actualizar.");return;}
+ const remaining=left(v);
+ const status=remaining<0?"{mileage} mi vencidas":remaining<=500?"{mileage} mi restantes":"{mileage} mi restantes";
+ const className=remaining<0?"danger":remaining<=500?"warn":"";
+ target.innerHTML='<div class="mileage-data">'+
+  '<div><small>'+escaped(translate("Millaje registrado"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
+  '<div><small>'+escaped(translate("Próximo cambio de aceite"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div></div>'+
+  '<span class="pill '+className+'">'+escaped(translate(status,{mileage:commas(Math.abs(remaining))}))+'</span>';
+}
+function renderOilServicePreview(){
+ const v=getV($("maintVehicle").value),preview=$("oilServicePreview");
+ if(!v){preview.textContent="";return;}
+ const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
+ const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
+ if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<v.miles||
+    !Number.isSafeInteger(interval)||interval<1||interval>100000||!Number.isSafeInteger(due)){
+   preview.textContent=translate("Escribe un millaje válido y el intervalo para calcular el próximo cambio.");
+ }else{
+   preview.textContent=translate("Si ya se cambió el aceite ahora, el próximo será a las {mileage} mi.",{mileage:commas(due)});
+ }
+}
+function renderNewVehicleOilPreview(){
+ const preview=$("vehicleOilSetupHint");
+ if($("vehInitialFields").hidden){preview.textContent="";return;}
+ const milesText=$("vehMiles").value.trim(),oilText=$("vehLastOil").value.trim(),intervalText=$("vehInterval").value.trim();
+ const miles=Number(milesText),last=Number(oilText),interval=Number(intervalText),due=last+interval;
+ if(!milesText||!oilText||!intervalText||![miles,last,interval,due].every(Number.isSafeInteger)||
+    miles<0||last<0||last>miles||interval<1||!Number.isSafeInteger(due)){
+  preview.textContent=translate("Revisa el millaje del último cambio y el intervalo.");
+ }else{
+  preview.textContent=translate("Próximo aceite calculado: {mileage} mi",{mileage:commas(due)});
+ }
+}
 
 let selectedVehicleId=null;
 let editingVehicleId=null;
