@@ -929,9 +929,15 @@ function showVehicleForm(id) {
  $("vehName").value=v?v.name:"";
  $("vehYear").value=v?v.year:new Date().getFullYear();
  $("vehEngine").value=v?v.engine:"";
- $("vehMiles").value=v?v.miles:0;
- $("vehDue").value=v?v.due:5000;
- $("vehInterval").value=v?v.interval:5000;
+ $("vehInitialFields").hidden=!!v;
+ $("vehMiles").value=v?String(v.miles):"";
+ $("vehLastOil").value=v&&Number.isSafeInteger(v.lastOil)?String(v.lastOil):"";
+ $("vehInterval").value=v?String(v.interval):"5000";
+ for (const id of ["vehMiles","vehLastOil","vehInterval"]){
+  $(id).disabled=!!v;
+  $(id).required=!v;
+ }
+ renderNewVehicleOilPreview();
  $("saveVehicle").textContent=translate(v?"Guardar cambios":"Guardar vehículo");
  $("vehicleForm").scrollIntoView({behavior:"smooth",block:"nearest"});
  $("vehName").focus();
@@ -950,26 +956,39 @@ $("newVehicle").addEventListener("click",()=>showVehicleForm());
 $("cancelVehicle").addEventListener("click",hideVehicleForm);
 $("vehicleForm").addEventListener("submit",e=>{
  e.preventDefault();
- const id=$("vehId").value.trim().toUpperCase();
- const name=$("vehName").value.trim(),engine=$("vehEngine").value.trim();
- const year=Number($("vehYear").value),miles=Number($("vehMiles").value),due=Number($("vehDue").value),interval=Number($("vehInterval").value);
+ const id=$("vehId").value.trim().toUpperCase(),
+   name=$("vehName").value.trim(),engine=$("vehEngine").value.trim();
+ const year=Number($("vehYear").value);
  if(!/^[A-Z0-9][A-Z0-9-]{1,24}$/.test(id))return alert(translate("Revisa el identificador del vehículo."));
- if(!name||!engine||!Number.isSafeInteger(year)||year<1980||year>new Date().getFullYear()+1||
-  ![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)
+ if(!name||!engine||!Number.isSafeInteger(year)||year<1980||year>new Date().getFullYear()+1)
   return alert(translate("Revisa los datos del vehículo."));
  const old=editingVehicleId?getV(editingVehicleId):null;
  if(!old&&getV(id))return alert(translate("Ya existe un vehículo con ese identificador."));
  if(old&&id!==old.id)return alert(translate("Revisa el identificador del vehículo."));
- const updated={id,name,year,engine,miles,due,interval,condition:old?.condition||"Disponible"};
+ let updated;
+ if(old){
+  // Edit the description only; odometer updates belong in the mileage panel.
+  updated={...old,name,year,engine};
+ }else{
+  const milesText=$("vehMiles").value.trim(),lastText=$("vehLastOil").value.trim(),
+    intervalText=$("vehInterval").value.trim();
+  const miles=Number(milesText),lastOil=Number(lastText),interval=Number(intervalText),due=lastOil+interval;
+  if(!milesText||!lastText||!intervalText||![miles,lastOil,interval,due].every(Number.isSafeInteger)||
+     miles<0||lastOil<0||interval<1||interval>100000)
+   return alert(translate("Revisa el millaje del último cambio y el intervalo."));
+  if(lastOil>miles)return alert(translate("El último cambio no puede superar el millaje actual."));
+  updated={id,name,year,engine,miles,due,interval,lastOil,condition:"Disponible"};
+ }
  const vehicles=old?data.vehicles.map(v=>v.id===old.id?updated:v):[...data.vehicles,updated];
- const changedMaintenance=old&&(old.miles!==miles||old.due!==due||old.interval!==interval);
- const maintenance=changedMaintenance?[...data.maintenance,{id:Date.now(),vehicle:id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)}]:data.maintenance;
- if(!commit({...data,vehicles,maintenance}))return;
+ if(!commit({...data,vehicles}))return;
  hideVehicleForm();
  selectedVehicleId=id;
  renderFlota();
  alert(translate(old?"Datos de vehículo actualizados.":"Vehículo añadido a la demostración."));
 });
+["vehMiles","vehLastOil","vehInterval"].forEach(id=>$(id).addEventListener("input",renderNewVehicleOilPreview));
+$("miles").addEventListener("input",renderOilServicePreview);
+$("interval").addEventListener("input",renderOilServicePreview);
 $("maintVehicle").addEventListener("change",maintenanceValues);
 $("historyFilter").addEventListener("change",renderMaintenance);
 $("vehicleList").addEventListener("click",e=>{
