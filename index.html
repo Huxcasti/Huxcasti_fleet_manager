@@ -577,6 +577,38 @@ Object.assign(english, {
   "Repuesto: {part}": "Part: {part}"
 });
 
+// Simpler odometer and oil-service workflow; all dynamic text is bilingual.
+Object.assign(english, {
+  "Datos iniciales de mantenimiento": "Initial maintenance setup",
+  "Solo al crear la guagua: indica el millaje actual y el último cambio de aceite. Calcularemos automáticamente el próximo.": "When adding a vehicle, enter its mileage and last oil change mileage. The next service is calculated automatically.",
+  "Millaje inicial": "Starting mileage",
+  "Millaje del último cambio de aceite": "Mileage at last oil change",
+  "Millaje y cambio de aceite": "Mileage and oil changes",
+  "Actualiza el odómetro de la guagua. El próximo aceite se calcula automáticamente cuando registras un servicio.": "Update the vehicle odometer. The next oil change is calculated automatically when you log a service.",
+  "Millaje actual del odómetro": "Current odometer reading",
+  "Registrar cambio de aceite realizado": "Log a completed oil change",
+  "Presiona el botón solamente cuando ya se haya cambiado el aceite. Usaremos el millaje del odómetro y el intervalo indicado.": "Only press this button after the oil has actually been changed. We use the odometer reading and service interval.",
+  "Confirmar cambio de aceite": "Confirm oil change",
+  "Millaje registrado": "Recorded mileage",
+  "Próximo cambio de aceite": "Next oil change",
+  "Estado del aceite": "Oil service status",
+  "Próximo aceite calculado: {mileage} mi": "Calculated next oil change: {mileage} mi",
+  "Calculado desde el último cambio a {mileage} mi.": "Calculated from the last oil change at {mileage} mi.",
+  "Escribe un millaje válido y el intervalo para calcular el próximo cambio.": "Enter a valid mileage and interval to calculate the next oil change.",
+  "Si ya se cambió el aceite ahora, el próximo será a las {mileage} mi.": "If the oil was changed now, the next service will be at {mileage} mi.",
+  "No puedes guardar un millaje menor que el ya registrado ({mileage} mi).": "You cannot save mileage lower than the previously recorded reading ({mileage} mi).",
+  "No puedes registrar un cambio a menos millas que las ya guardadas ({mileage} mi).": "You cannot log an oil change below the saved mileage ({mileage} mi).",
+  "El último cambio no puede superar el millaje actual.": "Last oil change mileage cannot exceed the current odometer reading.",
+  "Revisa el millaje del último cambio y el intervalo.": "Check the last oil change mileage and interval.",
+  "¿Confirmas que YA cambiaste el aceite de {vehicle} a las {mileage} millas? El próximo será a las {due} millas.": "Confirm the oil was ALREADY changed on {vehicle} at {mileage} miles? The next service will be at {due} miles.",
+  "Millaje actualizado": "Mileage updated",
+  "Último cambio de aceite": "Last oil change",
+  "a las {mileage} mi": "at {mileage} mi",
+  "Sin fecha de cambio registrada": "No oil change date logged",
+  "Primero registra el millaje de referencia de la guagua.": "First enter the vehicle's baseline mileage.",
+  "No hay vehículos para actualizar.": "No vehicles to update."
+});
+
 function detectLanguage() {
   const preferences = navigator.languages?.length ? navigator.languages : [navigator.language];
   for (const preference of preferences) {
