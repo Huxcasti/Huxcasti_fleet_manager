@@ -490,6 +490,8 @@ const english = {
   "Sin alertas pendientes.": "No active alerts.",
   "Sin averías registradas.": "No repair reports yet.",
   "Reportado el {date}": "Reported on {date}",
+  "Reportado el {date} · {time}": "Reported on {date} · {time}",
+  "Hora no registrada": "Time not recorded",
   "Fecha no disponible (dato de ejemplo)": "Date unavailable (sample data)",
   "Fecha del reporte no registrada": "Report date not recorded",
   "Alternador": "Alternator",
@@ -819,10 +821,16 @@ function renderDamages() {
     const example = damage.date === "Ejemplo";
     const part = example ? translate(damage.part) : damage.part;
     const details = example ? translate(damage.details) : damage.details;
-    // Existing real reports store a local calendar date (YYYY-MM-DD).
-    // Do not invent dates for sample or legacy records with no valid date.
-    const date= /^\d{4}-\d{2}-\d{2}$/.test(String(damage.date||"")) && !Number.isNaN(new Date(damage.date+"T12:00:00").getTime())
-      ? translate("Reportado el {date}",{date:dateLabel(damage.date)})
+    // New reports record the exact creation instant. Old reports only have
+    // a date, so show "time not recorded" instead of inventing a clock time.
+    const storedTimestamp=typeof damage.createdAt==="string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(damage.createdAt)
+      ? new Date(damage.createdAt) : null;
+    const recordedAt=storedTimestamp && Number.isFinite(storedTimestamp.getTime()) ? storedTimestamp : null;
+    const validDate= /^\d{4}-\d{2}-\d{2}$/.test(String(damage.date||"")) && !Number.isNaN(new Date(damage.date+"T12:00:00").getTime());
+    const displayDate=recordedAt ? recordedAt.toLocaleDateString(locale) : validDate ? dateLabel(damage.date) : null;
+    const displayTime=recordedAt ? recordedAt.toLocaleTimeString(locale,{hour:"numeric",minute:"2-digit",hour12:true}) : translate("Hora no registrada");
+    const date=displayDate
+      ? translate("Reportado el {date} · {time}",{date:displayDate,time:displayTime})
       : example?translate("Fecha no disponible (dato de ejemplo)"):translate("Fecha del reporte no registrada");
     const repairLabel = translate("Marcar como arreglado el reporte de {part} de la guagua {vehicle}", {part, vehicle: damage.vehicle});
     return `<div class="entry damage-entry">
@@ -1100,7 +1108,9 @@ $("damageForm").addEventListener("submit",e=>{
  e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
  const now=new Date();
   const reportDate=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
-  const damage={id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:reportDate};
+  // createdAt stores the exact time as an ISO instant, rendered in the
+  // viewing device's local timezone with 12-hour a.m./p.m. formatting.
+  const damage={id:now.getTime(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:reportDate,createdAt:now.toISOString()};
  const selectedPin=window.WILX3D?.pendingPin;
  if(selectedPin?.vehicleId===damage.vehicle)damage.pin={...selectedPin.pin};
  if(!commit({...data,damages:[...data.damages,damage]}))return;
