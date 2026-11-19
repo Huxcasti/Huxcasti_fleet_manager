@@ -63,7 +63,7 @@ async function open(id){
  document.body.style.overflow="hidden";
  overlay.hidden=false;
  $("inspectorTitle").textContent=t("Inspección 3D","3D inspection")+" · "+id;
- $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Referencia 3D Ford Transit estilo Prime; no es una réplica exacta","Prime-style Ford Transit 3D reference; not an exact replica");
+ $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+t("Guagua de reparto estilo Prime, modelo de referencia","Prime-style delivery van, reference model");
  $("inspectorStatus").textContent=t("Cargando guagua 3D…","Loading 3D van…");
  $("inspectorDetail").hidden=true;
  $("inspectorSelection").hidden=true;
@@ -73,9 +73,9 @@ async function open(id){
  $("inspectorClose").focus();
  try{
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const {mountVan3D}=await import("./van3d.js");
+  const {mountVan3D}=await import("./realvan.js");
   if(token!==loadToken)return;
-  viewer=mountVan3D($("inspectorStage"),{
+  const loadedViewer=await mountVan3D($("inspectorStage"),{
    language:api.language,
    damages:api.getData().damages.filter(d=>d.vehicle===id),
    onMarker(damage){
@@ -96,9 +96,11 @@ async function open(id){
     $("inspectorReport").disabled=false;
    }
   });
+  if(token!==loadToken){loadedViewer.destroy();return;}
+  viewer=loadedViewer;
   $("inspectorMark").disabled=false;
   $("inspectorView").disabled=false;
-  $("inspectorStatus").textContent=t("Modelo listo. Rojo: daño pendiente; verde: reparado.","Model ready. Red: pending damage; green: repaired.");
+  $("inspectorStatus").textContent=viewer.quality==="basic"?t("No se pudo cargar el modelo detallado. Se muestra la versión sencilla; intenta actualizar la página.", "Detailed model unavailable. The basic van is shown; try reloading.") : t("Modelo 3D detallado listo. Rojo: daño pendiente; verde: reparado.", "Detailed 3D model ready. Red: pending damage; green: repaired.");
  }catch(error){
   if(token!==loadToken)return;
   console.error("3D inspection failed",error);
