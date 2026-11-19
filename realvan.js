@@ -68,18 +68,18 @@ function attachBranding(van, scene) {
  const decals = [];
  if (sideMaterial) {
   for (const side of [-1, 1]) {
-   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.42, 1.01), sideMaterial);
+   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.85, 1.09), sideMaterial);
    mesh.rotation.y = side * Math.PI / 2;
-   mesh.position.set(side * 1.075, 1.84, -1.27);
+   mesh.position.set(side * 1.078, 1.87, -1.15);
    mesh.renderOrder = 2;
    van.add(mesh);
    decals.push(mesh);
   }
  }
  if (rearMaterial) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.58, 0.72), rearMaterial);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.54, 0.69), rearMaterial);
   mesh.rotation.y = Math.PI;
-  mesh.position.set(0, 1.89, -3.340);
+  mesh.position.set(0, 1.89, -3.302);
   mesh.renderOrder = 2;
   van.add(mesh);
   decals.push(mesh);
@@ -87,44 +87,52 @@ function attachBranding(van, scene) {
  return decals;
 }
 
-// The GLB already includes precisely modeled lamp lenses. The previous
-// rectangular overlays floated in front of the van and are deliberately gone.
-// Render the genuine source lamp meshes in front of the opaque housing
-// (which otherwise occludes them), separating front and back by camera angle.
+// ────────────────────────────────────────────────────────────────
+// 2. NATIVE FORD LIGHTS — NO FAKE BOXES OR FLOATING GEOMETRY
+// ────────────────────────────────────────────────────────────────
+// The actual GLB contains separate lamps, but part of their geometry sits
+// behind opaque bodywork. We preserve those exact meshes and render them as
+// a controlled overlay only when looking toward the relevant end of the van.
+// At side-on angles they fade away to prevent "floating" red / white strips.
 function revealOriginalLights(root) {
  const frontNames=new Set(["headlight_l","headlight_r","indicator_lf","indicator_rf","extralight_1","extralight_2"]);
- const rearNames=new Set(["misc_z","taillight_l","taillight_r","brakelight_l","brakelight_r","brakelight_m","reversinglight_l","reversinglight_r","indicator_lr","indicator_rr"]);
+ const rearNames=new Set(["taillight_l","taillight_r","brakelight_l","brakelight_r","brakelight_m","reversinglight_l","reversinglight_r","indicator_lr","indicator_rr"]);
  const front=[],rear=[];
  root.traverse(obj=>{
   if(!obj.isMesh||!obj.material)return;
   const name=(obj.name||"").toLowerCase().replace(/\.\d+$/,"");
   const isFront=frontNames.has(name),isRear=rearNames.has(name);
   if(!isFront&&!isRear)return;
-  // Per-mesh clone; never change the shared body paint/materials.
-  const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-  const adjusted=mats.map(mat=>{
-   const copy=mat.clone();
-   copy.depthTest=false;
-   copy.depthWrite=false;
-   copy.side=THREE.DoubleSide;
-   copy.transparent=true;
-   copy.opacity=1;
-   copy.needsUpdate=true;
-   return copy;
+  const mats=(Array.isArray(obj.material)?obj.material:[obj.material]).map(material=>{
+   const clone=material.clone();
+   clone.transparent=true;
+   clone.depthWrite=false;
+   clone.depthTest=false; // Genuine recessed lenses, not separate large panels
+   clone.opacity=1;
+   clone.side=THREE.DoubleSide;
+   clone.needsUpdate=true;
+   return clone;
   });
-  obj.material=Array.isArray(obj.material)?adjusted:adjusted[0];
-  // Genuine rear lens (misc_z) goes first; red brake, clear reverse and
-  // amber turn indicator meshes are layered above it.
-  if(name==="misc_z")obj.renderOrder=5;
-  else if(name.startsWith("reversinglight")||name.startsWith("indicator_"))obj.renderOrder=8;
-  else obj.renderOrder=7;
-  (isFront?front:rear).push(obj);
+  obj.material=Array.isArray(obj.material)?mats:mats[0];
+  obj.renderOrder=name.startsWith("indicator_")||name.startsWith("reversinglight")?8:7;
+  (isFront?front:rear).push({mesh:obj,materials:mats});
  });
- function update(cameraZ) {
-  // Avoid rendering the rear lamps through the van's body from the front.
-  const frontVisible=cameraZ>0.35,rearVisible=cameraZ< -0.35;
-  front.forEach(obj=>{obj.visible=frontVisible;});
-  rear.forEach(obj=>{obj.visible=rearVisible;});
+ const smooth=(v,min,max)=>{
+  const t=THREE.MathUtils.clamp((v-min)/(max-min),0,1);
+  return t*t*(3-2*t);
+ };
+ function update(cameraX,cameraZ) {
+  const angle= cameraZ/Math.max(0.001,Math.hypot(cameraX,cameraZ));
+  const frontOpacity=smooth(angle,0.35,0.82);
+  const rearOpacity=smooth(-angle,0.35,0.82);
+  for (const entry of front){
+   entry.mesh.visible=frontOpacity>0.015;
+   entry.materials.forEach(mat=>{mat.opacity=frontOpacity;});
+  }
+  for (const entry of rear){
+   entry.mesh.visible=rearOpacity>0.015;
+   entry.materials.forEach(mat=>{mat.opacity=rearOpacity;});
+  }
  }
  return {frontCount:front.length,rearCount:rear.length,update};
 }
@@ -161,7 +169,7 @@ function tintBody(root) {
   "display": {color:0x172839,roughness:0.25},
   "orange": {color:0xc88231},
   "yellow": {color:0xd4a044},
-  "lightglass": {color:0xb4c6d1,opacity:0.93,roughness:0.25},
+  "lightglass": {color:0x657786,opacity:0.96,roughness:0.32},
   "hatch": {color:0x1b2530},
   "ext_metal_rim": {color:0x79848d,metalness:0.78,roughness:0.29},
   "protektor": {color:0x202830,roughness:0.78},
@@ -174,22 +182,21 @@ function tintBody(root) {
  };
  const lightParts = {
   // Front lamp assemblies: frosted glass with a soft metallic reflector.
-  "headlight_l": {color:0xcddde8,metalness:0.22,roughness:0.18,emissive:0x7996b4,emissiveIntensity:0.18},
-  "headlight_r": {color:0xcddde8,metalness:0.22,roughness:0.18,emissive:0x7996b4,emissiveIntensity:0.18},
-  "extralight_1": {color:0xa4b6c7,metalness:0.30,roughness:0.20,emissive:0x647c91,emissiveIntensity:0.13},
-  "extralight_2": {color:0xa4b6c7,metalness:0.30,roughness:0.20,emissive:0x647c91,emissiveIntensity:0.13},
+  "headlight_l": {color:0xd3dfe6,metalness:0.16,roughness:0.22,emissive:0x536b80,emissiveIntensity:0.09},
+  "headlight_r": {color:0xd3dfe6,metalness:0.16,roughness:0.22,emissive:0x536b80,emissiveIntensity:0.09},
+  "extralight_1": {color:0x8c9fad,metalness:0.27,roughness:0.25,emissive:0x445d70,emissiveIntensity:0.07},
+  "extralight_2": {color:0x8c9fad,metalness:0.27,roughness:0.25,emissive:0x445d70,emissiveIntensity:0.07},
   // Tall Ford Transit rear lenses and upper brake lamp.
-  "taillight_l": {color:0xc82335,roughness:0.18,emissive:0x8f0d1f,emissiveIntensity:0.24},
-  "taillight_r": {color:0xc82335,roughness:0.18,emissive:0x8f0d1f,emissiveIntensity:0.24},
+  "taillight_l": {color:0xac1e31,roughness:0.24,emissive:0x670b19,emissiveIntensity:0.12},
+  "taillight_r": {color:0xac1e31,roughness:0.24,emissive:0x670b19,emissiveIntensity:0.12},
   "brakelight_l": {color:0xd52d3e,roughness:0.16,emissive:0x941222,emissiveIntensity:0.27},
   "brakelight_r": {color:0xd52d3e,roughness:0.16,emissive:0x941222,emissiveIntensity:0.27},
   "brakelight_m": {color:0xe33648,roughness:0.16,emissive:0xb01526,emissiveIntensity:0.30},
   // Clear reverse lenses; turn signals are amber, not white.
-  "misc_z": {color:0xab2035,metalness:0.10,roughness:0.23,emissive:0x4d050b,emissiveIntensity:0.07},
   "reversinglight_l": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
   "reversinglight_r": {color:0xc5d1da,metalness:0.12,roughness:0.16,emissive:0x71879b,emissiveIntensity:0.12},
-  "indicator_lf": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
-  "indicator_rf": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
+  "indicator_lf": {color:0xc58b3b,roughness:0.24,emissive:0x7d3e0a,emissiveIntensity:0.10},
+  "indicator_rf": {color:0xc58b3b,roughness:0.24,emissive:0x7d3e0a,emissiveIntensity:0.10},
   "indicator_lr": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18},
   "indicator_rr": {color:0xe3a044,roughness:0.19,emissive:0x9b520e,emissiveIntensity:0.18}
  };
@@ -256,7 +263,7 @@ export async function mountVan3D(stage, options = {}) {
  const scene = new THREE.Scene();
  scene.background = new THREE.Color(0xe6effa);
  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
- const initialCamera = new THREE.Vector3(6.2, 3.4, 7.7);
+ const initialCamera = new THREE.Vector3(5.45, 3.10, 6.85);
  camera.position.copy(initialCamera);
  const renderer = new THREE.WebGLRenderer({
   antialias: true, powerPreference: "low-power", alpha: false
@@ -317,7 +324,7 @@ export async function mountVan3D(stage, options = {}) {
 
  const decals = attachBranding(van);
  const originalLamps = revealOriginalLights(original);
- originalLamps.update(camera.position.z);
+ originalLamps.update(camera.position.x-controls.target.x,camera.position.z-controls.target.z);
  const pickable = [];
  original.traverse(o => { if (o.isMesh && o.geometry) pickable.push(o); });
  const markers = [];
@@ -410,7 +417,7 @@ export async function mountVan3D(stage, options = {}) {
   if(stopped)return;
   frame=window.requestAnimationFrame(animate);
   controls.update();
-  originalLamps.update(camera.position.z - controls.target.z);
+  originalLamps.update(camera.position.x-controls.target.x,camera.position.z-controls.target.z);
   renderer.render(scene,camera);
  }
  animate();
