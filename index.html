@@ -189,6 +189,9 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 .section-heading select { min-height:37px; }
 .vehicle-actions { display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap; margin-top:9px; }
 .vehicle-actions .btn { min-height:34px; padding:6px 9px; font-size:12px; }
+.vehicle-actions .btn.delete-vehicle { color:#a32633; border:1px solid #e5b4ba; background:#fff4f4; }
+.vehicle-actions .btn.delete-vehicle:hover { color:#7c1621; border-color:#b54651; background:#ffeaec; }
+.vehicle-actions .btn.delete-vehicle:focus-visible { outline:3px solid #ac2e43; outline-offset:2px; }
 .vehicle .end { max-width:60%; }
 .vehicle-info-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:10px; }
 .vehicle-info-grid div { background:#fff; border:1px solid #d3e4f5; border-radius:8px; padding:10px; }
@@ -414,6 +417,10 @@ Object.assign(english, {
   "Ver ficha": "View details",
   "Ocultar ficha": "Hide details",
   "Editar datos": "Edit vehicle",
+  "Eliminar vehículo": "Delete vehicle",
+  "No hay vehículos registrados.": "No vehicles registered.",
+  "¿Eliminar el vehículo {id} ({name})? También se eliminarán sus registros asociados en este navegador: {repairs} averías, {expenses} gastos y {maintenance} servicios de mantenimiento. Esta acción no se puede deshacer.": "Delete vehicle {id} ({name})? This also removes its records from this browser: {repairs} repair reports, {expenses} expenses, and {maintenance} maintenance records. This cannot be undone.",
+  "Vehículo y registros asociados eliminados de esta demostración.": "Vehicle and related records deleted from this demo.",
   "Actualizar millaje": "Update mileage",
   "Ficha de vehículo": "Vehicle details",
   "Averías pendientes": "Open repair reports",
@@ -530,7 +537,8 @@ function renderFlota() {
    '<p>'+escaped(translate("Aceite: {mileage} mi",{mileage:commas(v.due)}))+'</p>'+
    '<div class="vehicle-actions"><button class="btn secondary" type="button" id="vehicle-details-btn-'+escaped(v.id)+'" data-detail="'+escaped(v.id)+'" aria-expanded="'+expanded+'" aria-controls="vehicle-inline-'+escaped(v.id)+'">'+translate(expanded?"Ocultar ficha":"Ver ficha")+'</button>'+
    '<button class="btn secondary" type="button" data-vehicle-edit="'+escaped(v.id)+'">'+translate("Editar datos")+'</button>'+
-   '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button></div></div>'+ (expanded?'<div class="vehicle-inline-detail" id="vehicle-inline-'+escaped(v.id)+'" role="region" aria-label="'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+'">'+vehicleDetailsMarkup(v)+'</div>':'')+'</div>';
+   '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button>'+
+   '<button class="btn delete-vehicle" type="button" data-vehicle-delete="'+escaped(v.id)+'" aria-label="'+escaped(translate("Eliminar vehículo"))+': '+escaped(v.id)+'">'+translate("Eliminar vehículo")+'</button></div></div>'+ (expanded?'<div class="vehicle-inline-detail" id="vehicle-inline-'+escaped(v.id)+'" role="region" aria-label="'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+'">'+vehicleDetailsMarkup(v)+'</div>':'')+'</div>';
  }).join("") : '<p class="muted">'+translate("No hay vehículos registrados.")+'</p>';
  $("alerts").innerHTML=late.length ? late.sort((a,b)=>left(a)-left(b)).map(v=>{
   const remaining=left(v),overdue=remaining<0;
@@ -621,6 +629,27 @@ function commit(next) {
  render();
  return true;
 }
+function removeVehicle(id) {
+ const vehicle=getV(id);
+ if(!vehicle)return;
+ const repairs=data.damages.filter(d=>d.vehicle===id).length;
+ const expenses=data.expenses.filter(e=>e.vehicle===id).length;
+ const maintenance=data.maintenance.filter(m=>m.vehicle===id).length;
+ const message=translate("¿Eliminar el vehículo {id} ({name})? También se eliminarán sus registros asociados en este navegador: {repairs} averías, {expenses} gastos y {maintenance} servicios de mantenimiento. Esta acción no se puede deshacer.",{id:vehicle.id,name:vehicle.name,repairs,expenses,maintenance});
+ if(!confirm(message))return;
+ const next={
+  ...data,
+  vehicles:data.vehicles.filter(v=>v.id!==id),
+  damages:data.damages.filter(d=>d.vehicle!==id),
+  expenses:data.expenses.filter(e=>e.vehicle!==id),
+  maintenance:data.maintenance.filter(m=>m.vehicle!==id)
+ };
+ if(!commit(next))return;
+ if(selectedVehicleId===id)selectedVehicleId=null;
+ if(editingVehicleId===id)hideVehicleForm();
+ renderFlota();
+ alert(translate("Vehículo y registros asociados eliminados de esta demostración."));
+}
 function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown(); }
 function nextVehicleId() {
  let number=101;
@@ -679,6 +708,8 @@ $("vehicleForm").addEventListener("submit",e=>{
 $("maintVehicle").addEventListener("change",maintenanceValues);
 $("historyFilter").addEventListener("change",renderMaintenance);
 $("vehicleList").addEventListener("click",e=>{
+ const remove=e.target.closest("[data-vehicle-delete]");
+ if(remove){removeVehicle(remove.dataset.vehicleDelete);return;}
  const detail=e.target.closest("[data-detail]");
  if(detail){
   const id=detail.dataset.detail;
