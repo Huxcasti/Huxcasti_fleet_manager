@@ -35,8 +35,10 @@ function makeDecal(kind) {
   ctx.lineTo(801, 221);
   ctx.stroke();
   ctx.fillStyle = "#f6fbff";
-  ctx.font = "bold 106px Arial, sans-serif";
-  ctx.fillText("prime", 687, 106);
+  // Keep the lettering above the blue arrow, including the descender
+  // of the "p". This gives the arrowhead clear space without moving the van decal.
+  ctx.font = "bold 90px Arial, sans-serif";
+  ctx.fillText("prime", 714, 72);
  } else {
   ctx.fillStyle = "#f7fbff";
   ctx.font = "bold 130px Arial, sans-serif";
