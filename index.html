@@ -739,7 +739,57 @@ function removeVehicle(id) {
  renderFlota();
  alert(translate("Vehículo y registros asociados eliminados de esta demostración."));
 }
-function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown(); }
+
+let partsSearch=null;
+const shopList=[
+ {name:"Amazon",initial:"A",build:q=>"https://www.amazon.com/s?k="+encodeURIComponent(q)},
+ {name:"AutoZone",initial:"AZ",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)},
+ {name:"O'Reilly",initial:"O",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)},
+ {name:"RockAuto",initial:"RA",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)}
+];
+function normalizedPart(part){
+ const key=part.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+ const aliases={
+ "wipers":"windshield wiper blades","wiper":"windshield wiper blades",
+ "limpiaparabrisas":"windshield wiper blades","plumillas":"windshield wiper blades","escobillas":"windshield wiper blades",
+ "frenos":"brake pads","pastillas de freno":"brake pads",
+ "alternador":"alternator","bateria":"car battery","filtro de aire":"air filter"
+ };
+ return Object.hasOwn(aliases,key)?aliases[key]:part.trim();
+}
+function resetPartsSearch(){
+ partsSearch=null;
+ $("partsResults").replaceChildren();
+ $("partsRegister").hidden=true;
+}
+function renderPartsSearch(){
+ const target=$("partsResults");
+ const search=partsSearch,v=search&&getV(search.vehicleId);
+ if(!search||!v){resetPartsSearch();return;}
+ const normalized=normalizedPart(search.part);
+ const query=[v.year,v.name,v.engine,normalized,search.partNumber].filter(Boolean).join(" ");
+ const mask=search.vin?translate("VIN registrado (final {ending})",{ending:search.vin.slice(-4)}):"";
+ const tags=[v.id,v.engine,search.partNumber?translate("Número de parte")+": "+search.partNumber:"",mask].filter(Boolean);
+ const links=shopList.map(shop=>
+  '<a class="parts-shop-card" target="_blank" rel="noopener noreferrer" href="'+escaped(shop.build(query))+'" aria-label="'+escaped(shop.name)+': '+escaped(translate("Consultar resultados"))+'">'+
+   '<span class="parts-shop-mark" aria-hidden="true">'+escaped(shop.initial)+'</span>'+
+   '<span class="parts-shop-name"><strong>'+escaped(shop.name)+'</strong><small>'+escaped(translate("Consultar resultados"))+'</small></span>'+
+   '<span class="parts-shop-out" aria-hidden="true">↗</span></a>'
+ ).join("");
+ target.innerHTML='<div class="parts-result">'+
+  '<div class="parts-summary"><span class="parts-summary-kicker">'+escaped(translate("Búsqueda lista"))+'</span>'+
+  '<h3>'+escaped(search.part)+'</h3>'+
+  '<p>'+escaped(translate("Vehículo seleccionado"))+': '+escaped(v.year)+' '+escaped(v.name)+'</p>'+
+  '<div class="parts-tags">'+tags.map(x=>'<span class="parts-tag">'+escaped(x)+'</span>').join("")+'</div>'+
+  (normalized!==search.part?'<p>'+escaped(translate("Término de búsqueda"))+': '+escaped(normalized)+'</p>':"")+'</div>'+
+  '<h3 class="parts-subtitle">'+escaped(translate("Consultar en tiendas"))+'</h3>'+
+  '<div class="parts-shop-grid">'+links+'</div>'+
+  '<p class="parts-helper" style="margin-top:10px">'+escaped(translate("Se abrirá una búsqueda externa. Los resultados y precios no se consultan en vivo."))+'</p>'+
+  '<div class="parts-compat"><span aria-hidden="true">⚠</span><div><strong>'+escaped(translate("Compatibilidad no verificada"))+'</strong>'+
+  '<p>'+escaped(translate("Las tiendas deben confirmar que la pieza corresponde a tu vehículo. Comprueba VIN, número de parte y especificaciones antes de comprar."))+'</p></div></div></div>';
+ $("partsRegister").hidden=false;
+}
+function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown();renderPartsSearch(); }
 function nextVehicleId() {
  let number=101;
  while(getV("F-"+number)) number++;
@@ -764,12 +814,13 @@ function showVehicleForm(id) {
 function hideVehicleForm(){editingVehicleId=null;$("vehicleForm").hidden=true;$("vehicleForm").reset();}
 
 
-document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
- document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",tab===t));
- document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+tab.dataset.page);
+function openPage(page){
+ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));
+ document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+page);
  const titles={flota:"Resumen de la flota",averias:"Reportes de averías",repuestos:"Búsqueda de repuestos",gastos:"Control de gastos"};
- $("pageTitle").textContent=translate(titles[tab.dataset.page]);
-}));
+ $("pageTitle").textContent=translate(titles[page]);
+}
+document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>openPage(tab.dataset.page)));
 $("newVehicle").addEventListener("click",()=>showVehicleForm());
 $("cancelVehicle").addEventListener("click",hideVehicleForm);
 $("vehicleForm").addEventListener("submit",e=>{
@@ -849,24 +900,44 @@ $("damages").addEventListener("click",e=>{
  const status=$("damage-status-"+index);if(status)status.focus();
 });
 $("partsForm").addEventListener("submit",e=>{
- e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
- const q=v.year+" "+v.name+" "+v.engine+" "+part;
- const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
- const target=$("partsResults");target.replaceChildren();const p=document.createElement("p");
- p.textContent=translate("Búsquedas preparadas para {query}",{query:q});target.append(p);
- urls.forEach(([name,url])=>{const a=document.createElement("a");a.className="shop";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=translate("Buscar en {store} ↗",{store:name});target.append(a);});
+ e.preventDefault();
+ const v=getV($("partVehicle").value),part=$("partName").value.trim();
+ const partNumber=$("partNumber").value.trim();
+ const vin=$("partVin").value.trim().toUpperCase();
+ if(!v)return alert(translate("Selecciona un vehículo antes de buscar."));
+ if(!part)return alert(translate("Escribe la pieza que necesitas."));
+ if(vin&&!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin))return alert(translate("Introduce un VIN válido de 17 caracteres (sin I, O ni Q), o déjalo en blanco."));
+ partsSearch={vehicleId:v.id,part,partNumber,vin};
+ $("partSupplier").value="Amazon";
+ renderPartsSearch();
+ $("partsResults").scrollIntoView({behavior:"smooth",block:"nearest"});
+});
+["input","change"].forEach(eventName=>$("partsForm").addEventListener(eventName,()=>{if(partsSearch)resetPartsSearch();}));
+$("registerPartExpense").addEventListener("click",()=>{
+ if(!partsSearch||!getV(partsSearch.vehicleId))return alert(translate("Busca una pieza antes de registrar una compra."));
+ const supplier=$("partSupplier").value;
+ const desc=[translate("Repuesto: {part}",{part:partsSearch.part}),partsSearch.partNumber?"#"+partsSearch.partNumber:"",supplier].filter(Boolean).join(" · ").slice(0,150);
+ openPage("gastos");
+ $("expenseVehicle").value=partsSearch.vehicleId;
+ $("expenseType").value="Repuesto";
+ $("expenseDetails").value=desc;
+ $("expenseCost").value="";
+ $("expenseSourceNote").hidden=false;
+ $("expenseCost").focus();
+ $("expenseForm").scrollIntoView({behavior:"smooth",block:"center"});
 });
 $("expenseForm").addEventListener("submit",e=>{
  e.preventDefault();const cost=Number($("expenseCost").value),details=$("expenseDetails").value.trim();
  if(!Number.isFinite(cost)||cost<=0||!details)return;
  const expense={id:Date.now(),vehicle:$("expenseVehicle").value,type:$("expenseType").value,cost,details,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,expenses:[...data.expenses,expense]}))return;
+ $("expenseSourceNote").hidden=true;
  e.target.reset();alert(translate("Gasto registrado en la demo."));
 });
 $("resetDemo").addEventListener("click",()=>{
  if(!confirm(translate("¿Restaurar todos los datos ficticios?")))return;
  if(!commit(copy(initial)))return;
- selectedVehicleId=null;hideVehicleForm();renderFlota();$("partsResults").replaceChildren();
+ selectedVehicleId=null;hideVehicleForm();resetPartsSearch();$("expenseSourceNote").hidden=true;renderFlota();
 });
 localizePage();
 render();
