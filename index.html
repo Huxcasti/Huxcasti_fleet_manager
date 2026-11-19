@@ -151,6 +151,7 @@ input, select { width: 100%; min-width: 0; min-height: 43px; padding: 10px 11px;
 .btnrow, .damage-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .damage-entry { flex-wrap: wrap; }
 .damage-details { flex: 1 1 12rem; }
+.damage-date { display:block; margin-top:7px; color:#526b86; font-size:12px; font-weight:600; line-height:1.4; }
 .damage-actions .btn { font-size: 13px; padding: 8px 10px; }
 .note { margin: 12px 0; padding: 11px 13px; border: 1px solid #d3e4f5; border-radius: 8px; color: #274f77; background: #edf6ff; font-size: 13px; line-height: 1.5; }
 .note.warning { border-color: #f1e1c1; color: #775017; background: #fff6e6; }
@@ -488,6 +489,9 @@ const english = {
   "Editar": "Edit",
   "Sin alertas pendientes.": "No active alerts.",
   "Sin averías registradas.": "No repair reports yet.",
+  "Reportado el {date}": "Reported on {date}",
+  "Fecha no disponible (dato de ejemplo)": "Date unavailable (sample data)",
+  "Fecha del reporte no registrada": "Report date not recorded",
   "Alternador": "Alternator",
   "Pendiente de diagnóstico": "Awaiting diagnosis",
   "Arreglado": "Fixed",
@@ -815,11 +819,17 @@ function renderDamages() {
     const example = damage.date === "Ejemplo";
     const part = example ? translate(damage.part) : damage.part;
     const details = example ? translate(damage.details) : damage.details;
+    // Existing real reports store a local calendar date (YYYY-MM-DD).
+    // Do not invent dates for sample or legacy records with no valid date.
+    const date= /^\d{4}-\d{2}-\d{2}$/.test(String(damage.date||"")) && !Number.isNaN(new Date(damage.date+"T12:00:00").getTime())
+      ? translate("Reportado el {date}",{date:dateLabel(damage.date)})
+      : example?translate("Fecha no disponible (dato de ejemplo)"):translate("Fecha del reporte no registrada");
     const repairLabel = translate("Marcar como arreglado el reporte de {part} de la guagua {vehicle}", {part, vehicle: damage.vehicle});
     return `<div class="entry damage-entry">
       <div class="damage-details">
         <strong>${escaped(damage.vehicle)} · ${escaped(part)}</strong>
-        <p>${escaped(details)}</p>
+        <span class="damage-date">${escaped(date)}</span>
+        ${details ? `<p>${escaped(details)}</p>` : ""}
       </div>
       <div class="damage-actions">
         <span class="pill${repaired ? "" : " warn"}" id="damage-status-${index}" tabindex="-1">${translate(repaired ? "Arreglado" : "Pendiente")}</span>
@@ -1088,7 +1098,9 @@ $("oilChanged").addEventListener("click",()=>{
 });
 $("damageForm").addEventListener("submit",e=>{
  e.preventDefault();const part=$("damagePart").value.trim();if(!part)return;
- const damage={id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:new Date().toISOString().slice(0,10)};
+ const now=new Date();
+  const reportDate=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+  const damage={id:Date.now(),vehicle:$("damageVehicle").value,part,details:$("damageDetails").value.trim(),date:reportDate};
  const selectedPin=window.WILX3D?.pendingPin;
  if(selectedPin?.vehicleId===damage.vehicle)damage.pin={...selectedPin.pin};
  if(!commit({...data,damages:[...data.damages,damage]}))return;
