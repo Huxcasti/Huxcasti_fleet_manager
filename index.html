@@ -1008,23 +1008,31 @@ $("vehicleList").addEventListener("click",e=>{
  if(update){$("maintVehicle").value=update.dataset.vehicle;maintenanceValues();$("maintenanceForm").scrollIntoView({behavior:"smooth",block:"center"});$("miles").focus();}
 });
 $("maintenanceForm").addEventListener("submit",e=>{
- e.preventDefault();const v=getV($("maintVehicle").value);if(!v)return;
- const miles=Number($("miles").value),due=Number($("due").value),interval=Number($("interval").value);
- if(![miles,due,interval].every(Number.isSafeInteger)||miles<0||due<0||interval<1)return alert(translate("Verifica los valores del millaje."));
- if(v.miles===miles&&v.due===due&&v.interval===interval)return alert(translate("No hay cambios para guardar."));
- const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,due,interval}:item);
- const record={id:Date.now(),vehicle:v.id,type:"Actualización de mantenimiento",miles,due,date:new Date().toISOString().slice(0,10)};
+ e.preventDefault();
+ const v=getV($("maintVehicle").value);if(!v)return;
+ const raw=$("miles").value.trim(),miles=Number(raw);
+ if(!raw||!Number.isSafeInteger(miles)||miles<0)return alert(translate("Verifica los valores del millaje."));
+ if(miles<v.miles)return alert(translate("No puedes guardar un millaje menor que el ya registrado ({mileage} mi).",{mileage:commas(v.miles)}));
+ if(miles===v.miles)return alert(translate("No hay cambios para guardar."));
+ // Updating the odometer NEVER changes v.due or v.interval.
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles}:item);
+ const record={id:Date.now(),vehicle:v.id,type:"Millaje actualizado",miles,due:v.due,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
  alert(translate("Millaje guardado en la demostración."));
 });
 $("oilChanged").addEventListener("click",()=>{
  const v=getV($("maintVehicle").value);if(!v)return;
- const miles=Number($("miles").value),interval=Number($("interval").value);
- if(!Number.isSafeInteger(miles)||miles<0||!Number.isSafeInteger(interval)||interval<1)return alert(translate("Verifica el millaje y el intervalo."));
- const due=miles+interval;
+ const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
+ const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
+ if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<0||
+    !Number.isSafeInteger(interval)||interval<1||interval>100000)
+  return alert(translate("Verifica el millaje y el intervalo."));
+ if(miles<v.miles)return alert(translate("No puedes registrar un cambio a menos millas que las ya guardadas ({mileage} mi).",{mileage:commas(v.miles)}));
  if(!Number.isSafeInteger(due))return alert(translate("El millaje y el intervalo producen un valor demasiado grande."));
- if(!confirm(translate("¿Registrar el cambio de aceite de {vehicle} a las {mileage} millas?",{vehicle:v.id,mileage:commas(miles)})))return;
- const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,interval,due}:item);
+ if(!confirm(translate("¿Confirmas que YA cambiaste el aceite de {vehicle} a las {mileage} millas? El próximo será a las {due} millas.",
+   {vehicle:v.id,mileage:commas(miles),due:commas(due)})))return;
+ // One atomic update: save odometer, oil interval, next service and history.
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,interval,due,lastOil:miles}:item);
  const record={id:Date.now(),vehicle:v.id,type:"Cambio de aceite",miles,due,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
  alert(translate("Nuevo cambio programado para {mileage} millas.",{mileage:commas(due)}));
