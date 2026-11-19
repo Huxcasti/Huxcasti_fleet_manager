@@ -81,24 +81,76 @@ function attachBranding(van, scene) {
  return decals;
 }
 
+// The source GLB has no embedded textures: 34 of its 36 materials default
+// to a near-white 0.8 base color. Color every named part deliberately instead
+// of recoloring just the two exterior paint materials. Preserve the original
+// meshes so body panels and interactive damage coordinates remain unchanged.
 function tintBody(root) {
+ const looks = {
+  "script_rt_dials_gen_taxi": {color:0x222b36},
+  "caliper": {color:0x545f68,metalness:0.55},
+  "vehicle_generic_smallspecmap__paint_1_": {color:0x30495f,metalness:0.33,roughness:0.40},
+  "chrome86effect": {color:0x84949f,metalness:0.72,roughness:0.25},
+  "plastic2": {color:0x1f2932,roughness:0.76},
+  "grey2": {color:0x303a45,roughness:0.73},
+  "exterior_diffuse": {color:0x252d36,roughness:0.72},
+  "grayglass": {color:0x1a3448,metalness:0.08,roughness:0.21,opacity:0.84},
+  "ford": {color:0x23496b,metalness:0.42},
+  "vehicle_generic_smallspecmap__paint_2_": {color:0x30495f,metalness:0.33,roughness:0.40},
+  "lightsglass": {color:0xadbcc9,metalness:0.10,roughness:0.21,opacity:0.90},
+  "lights": {color:0xc0c9d1,roughness:0.30,emissive:0x313a43},
+  "miror": {color:0x314656,metalness:0.44,roughness:0.23},
+  "interior_diffuse": {color:0x2b343e,roughness:0.84},
+  "license_frame": {color:0x1b232b},
+  "headglass": {color:0xb8c5cf,metalness:0.15,roughness:0.20,opacity:0.93},
+  "px2": {color:0x28333e},
+  "notepad": {color:0x3b454e},
+  "black": {color:0x171d24},
+  "notepad_tex": {color:0x49525c},
+  "cardboard_boxs_albedo": {color:0x77634c},
+  "gz_v_ss_officejunk": {color:0x4e5863},
+  "offwhite": {color:0xb1b9c2,roughness:0.85},
+  "display": {color:0x172839,roughness:0.25},
+  "orange": {color:0xc88231},
+  "yellow": {color:0xd4a044},
+  "lightglass": {color:0xb4c6d1,opacity:0.93,roughness:0.25},
+  "hatch": {color:0x1b2530},
+  "ext_metal_rim": {color:0x79848d,metalness:0.78,roughness:0.29},
+  "protektor": {color:0x202830,roughness:0.78},
+  "rezina": {color:0x14191e,roughness:0.96},
+  "matte__ffb2b2b2__spec_": {color:0x838e98,metalness:0.56,roughness:0.40},
+  "ext_metal_nuts_blots": {color:0x919da7,metalness:0.81,roughness:0.24},
+  "matte__ffacacac__spec_": {color:0x68737e,metalness:0.36},
+  "int_plastic_black": {color:0x1d242c,roughness:0.83},
+  "int_red_indicator": {color:0xb3353e,roughness:0.47}
+ };
  const processed = new Map();
  root.traverse(obj => {
   if (!obj.isMesh || !obj.material) return;
-  const existing = Array.isArray(obj.material) ? obj.material : [obj.material];
-  const converted = existing.map(mat => {
+  const original = Array.isArray(obj.material) ? obj.material : [obj.material];
+  const converted = original.map(mat => {
    if (!mat || !mat.color) return mat;
-   const name = (mat.name || "").toLowerCase();
-   const meshName = (obj.name || "").toLowerCase();
-   const match = /vehicle_generic_smallspecmap__paint|body.?paint|vehicle.?paint|car.?paint|bodywork|coachwork|exterior.?paint|paint.?blue/i;
-   if (!(match.test(name) || match.test(meshName))) return mat;
-   if (/(?:window|glass|lamp|tire|tyre|wheel|rubber)/.test(name+" "+meshName)) return mat;
    if (processed.has(mat)) return processed.get(mat);
+   const key = (mat.name || "").toLowerCase().replace(/\.\d+$/, "");
+   // Unrecognized materials are left alone, including user-added textures.
+   const look = looks[key];
+   if (!look) return mat;
    const clone = mat.clone();
-   clone.color.set(0x30495f);
-   clone.metalness = 0.30;
-   clone.roughness = 0.48;
-   processed.set(mat,clone);
+   clone.color.setHex(look.color);
+   clone.metalness = look.metalness ?? 0.08;
+   clone.roughness = look.roughness ?? 0.67;
+   if (look.opacity !== undefined) {
+    clone.transparent = true;
+    clone.opacity = look.opacity;
+    clone.depthWrite = false;
+    clone.side = THREE.DoubleSide;
+   }
+   if (look.emissive && clone.emissive) {
+    clone.emissive.setHex(look.emissive);
+    clone.emissiveIntensity = 0.08;
+   }
+   clone.needsUpdate = true;
+   processed.set(mat, clone);
    return clone;
   });
   obj.material = Array.isArray(obj.material) ? converted : converted[0];
@@ -136,7 +188,7 @@ export async function mountVan3D(stage, options = {}) {
  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
  renderer.outputColorSpace = THREE.SRGBColorSpace;
  renderer.toneMapping = THREE.ACESFilmicToneMapping;
- renderer.toneMappingExposure = 1.3;
+ renderer.toneMappingExposure = 1.05;
  renderer.shadowMap.enabled = false;
  renderer.domElement.style.width = "100%";
  renderer.domElement.style.height = "100%";
@@ -159,14 +211,14 @@ export async function mountVan3D(stage, options = {}) {
  controls.target.set(0, 1.32, 0);
  controls.update();
 
- scene.add(new THREE.HemisphereLight(0xf9fdff, 0x8b9aaa, 2.3));
- const keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
+ scene.add(new THREE.HemisphereLight(0xf9fdff, 0x8b9aaa, 1.75));
+ const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
  keyLight.position.set(-6, 9, 8);
  scene.add(keyLight);
- const softLight = new THREE.DirectionalLight(0x8cc7ff, 1.65);
+ const softLight = new THREE.DirectionalLight(0x8cc7ff, 0.95);
  softLight.position.set(6, 5, -7);
  scene.add(softLight);
- const fill = new THREE.DirectionalLight(0xffffff, 0.9);
+ const fill = new THREE.DirectionalLight(0xffffff, 0.6);
  fill.position.set(0, 4, -9);
  scene.add(fill);
 
