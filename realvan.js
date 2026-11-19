@@ -20,17 +20,19 @@ function makeDecal(kind) {
  if (kind === "side") {
   ctx.strokeStyle = "#05aafa";
   ctx.lineCap = "round";
-  ctx.lineWidth = 39;
+  // One unbroken smile ends at the arrow tip. The two arrowhead strokes
+  // meet ONLY at that tip; neither segment crosses or overlaps the smile.
+  ctx.lineWidth = 34;
   ctx.beginPath();
   ctx.moveTo(55, 184);
-  ctx.bezierCurveTo(280, 349, 539, 342, 783, 169);
+  ctx.bezierCurveTo(280, 347, 566, 341, 827, 119);
   ctx.stroke();
-  ctx.lineWidth = 23;
+  ctx.lineWidth = 21;
   ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.moveTo(719, 170);
-  ctx.lineTo(832, 120);
-  ctx.lineTo(799, 237);
+  ctx.moveTo(748, 112);
+  ctx.lineTo(827, 119);
+  ctx.lineTo(801, 221);
   ctx.stroke();
   ctx.fillStyle = "#f6fbff";
   ctx.font = "bold 106px Arial, sans-serif";
@@ -68,12 +70,11 @@ function attachBranding(van, scene) {
  const decals = [];
  if (sideMaterial) {
   for (const side of [-1, 1]) {
-   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.85, 1.03), sideMaterial);
+   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.85, 1.09), sideMaterial);
    mesh.rotation.y = side * Math.PI / 2;
-   // Lower and slightly compress both Prime decals to create a clear visual gap
-   // between the arrowhead and the cargo-body seam. The panel surface at
-   // this height is around x=+/-0.96m; x=+/-1.025m stays just outside it.
-   mesh.position.set(side * 1.025, 1.48, -1.15);
+   // Restored original v5 placement requested by the user.
+   // Only the shape of the blue arrow has changed.
+   mesh.position.set(side * 1.078, 1.87, -1.15);
    mesh.renderOrder = 2;
    van.add(mesh);
    decals.push(mesh);
