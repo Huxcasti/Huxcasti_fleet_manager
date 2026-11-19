@@ -712,25 +712,35 @@ data.vehicles.forEach(v=>{const o=document.createElement("option");o.value=v.id;
 if(getV(old))s.value=old;
 })}
 // Odometer values are independent of the next oil-service target.
+function setOilForm(open){
+ $("oilServicePanel").hidden=!open;
+ $("toggleOil").setAttribute("aria-expanded",String(open));
+ $("toggleOil").textContent=translate(open?"Ocultar registro de aceite":"Registrar cambio de aceite");
+ if(open)renderOilServicePreview();
+}
 function maintenanceValues(){
  const v=getV($("maintVehicle").value);
  $("miles").value=v?String(v.miles):"";
  $("interval").value=v?String(v.interval):"";
  $("miles").min=v?String(v.miles):"0";
  $("oilChanged").disabled=!v;
+ $("toggleOil").disabled=!v;
+ setOilForm(false);
  renderMileageSummary();
- renderOilServicePreview();
 }
 function renderMileageSummary(){
  const v=getV($("maintVehicle").value),target=$("mileageSummary");
  if(!v){target.textContent=translate("No hay vehículos para actualizar.");return;}
  const remaining=left(v);
- const status=remaining<0?"{mileage} mi vencidas":remaining<=500?"{mileage} mi restantes":"{mileage} mi restantes";
+ const status=remaining<0?
+   translate("El aceite está atrasado por {mileage} millas.",{mileage:commas(Math.abs(remaining))}):
+   remaining===0?translate("Le toca cambiar el aceite ahora."):
+   translate("Te faltan {mileage} millas para el aceite.",{mileage:commas(remaining)});
  const className=remaining<0?"danger":remaining<=500?"warn":"";
- target.innerHTML='<div class="mileage-data">'+
-  '<div><small>'+escaped(translate("Millaje registrado"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
-  '<div><small>'+escaped(translate("Próximo cambio de aceite"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div></div>'+
-  '<span class="pill '+className+'">'+escaped(translate(status,{mileage:commas(Math.abs(remaining))}))+'</span>';
+ target.innerHTML='<div class="mileage-data"><div><small>'+escaped(translate("Próximo cambio de aceite"))+
+  '</small><strong>'+escaped(commas(v.due))+' mi</strong></div>'+
+  '<div><span class="pill '+className+'">'+escaped(translate(remaining<0?"Vencido":remaining<=500?"Próximo":"Al día"))+'</span></div></div>'+
+  '<p class="mileage-explanation">'+escaped(status)+'</p>';
 }
 function renderOilServicePreview(){
  const v=getV($("maintVehicle").value),preview=$("oilServicePreview");
@@ -1027,6 +1037,8 @@ $("vehicleForm").addEventListener("submit",e=>{
 $("miles").addEventListener("input",renderOilServicePreview);
 $("interval").addEventListener("input",renderOilServicePreview);
 $("maintVehicle").addEventListener("change",maintenanceValues);
+$("toggleOil").addEventListener("click",()=>setOilForm($("oilServicePanel").hidden));
+$("cancelOil").addEventListener("click",()=>setOilForm(false));
 $("historyFilter").addEventListener("change",renderMaintenance);
 $("vehicleList").addEventListener("click",e=>{
  const remove=e.target.closest("[data-vehicle-delete]");
