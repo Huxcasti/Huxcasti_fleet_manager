@@ -223,6 +223,40 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 .vehicle-inline-detail { flex:1 1 100%; width:100%; min-width:0; border-top:1px solid var(--line); padding-top:12px; margin-top:9px; }
 .vehicle-inline-detail > strong { display:block; font-size:14px; }
 .vehicle-inline-detail .vehicle-info-grid { margin-top:10px; }
+
+/* Enhanced parts finder */
+.parts-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:17px}
+.parts-form-head h2{margin:0 0 5px;font-size:21px}
+.parts-form-head p{margin:0}
+.parts-icon{flex:none;width:45px;height:45px;display:grid;place-items:center;border-radius:12px;background:#eaf4ff;color:#174b89;font-size:24px}
+.parts-helper{margin:0;color:var(--muted);font-size:12px}
+.parts-result{margin-top:20px;border-top:1px solid #dbe7f5;padding-top:20px}
+.parts-summary{border:1px solid #184c7b;border-radius:14px;padding:18px 20px;color:#fff;background:linear-gradient(115deg,#122b49,#19598e)}
+.parts-summary-kicker{display:block;color:#9ddff9;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:800}
+.parts-summary h3{margin:6px 0;font-size:clamp(20px,2.5vw,25px);overflow-wrap:anywhere}
+.parts-summary p{margin:5px 0 0;font-size:13px;color:#e0f0ff;overflow-wrap:anywhere}
+.parts-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.parts-tag{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #79b2db;border-radius:20px;background:#244e70;font-size:12px;color:#fff;overflow-wrap:anywhere;max-width:100%}
+.parts-subtitle{font-size:16px;font-weight:800;margin:19px 0 11px}
+.parts-shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.parts-shop-card{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid #cedff0;border-radius:12px;background:#fff;color:#183759;text-decoration:none;box-shadow:0 3px 10px #1535570a;transition:background .15s,border-color .15s,transform .15s;min-width:0}
+.parts-shop-card:hover{border-color:#549fd6;background:#f2f8ff;transform:translateY(-1px)}
+.parts-shop-card:focus-visible{outline:3px solid #2589d5;outline-offset:3px}
+.parts-shop-mark{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:10px;background:#eaf3ff;color:#164e8f;font-weight:850;font-size:18px}
+.parts-shop-name{flex:1;min-width:0}
+.parts-shop-name strong{display:block;font-size:14px;overflow-wrap:anywhere}
+.parts-shop-name small{display:block;font-size:12px;color:#5b708c;margin-top:3px}
+.parts-shop-out{flex:none;font-size:20px;color:#246db0}
+.parts-register{margin-top:17px;padding:17px;border:1px solid #b7d5ed;border-radius:12px;background:#edf7ff}
+.parts-register h3{margin:0 0 5px;font-size:16px}
+.parts-register p{margin:0 0 13px;font-size:13px;color:#405f7d;line-height:1.5}
+.parts-register .form-actions{align-items:flex-end}
+.parts-register .form-actions>div{flex:1;min-width:180px}
+.parts-register .form-actions .btn{flex:none}
+.parts-compat{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border-radius:11px;background:#fff7e9;border:1px solid #e9d5b1;margin-top:16px}
+.parts-compat strong{display:block;font-size:13px;color:#704a13}
+.parts-compat p{margin:3px 0 0;line-height:1.5;font-size:12px;color:#765829}
+@media(max-width:640px){.parts-shop-grid{grid-template-columns:minmax(0,1fr)}.parts-summary{padding:16px}.parts-register .form-actions{flex-direction:column;align-items:stretch}.parts-register .form-actions>div{width:100%}.parts-register .btn{width:100%}.parts-icon{width:39px;height:39px;font-size:21px}}
 </style>
 </head>
 <body>
@@ -290,12 +324,35 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <button type="submit" class="btn" data-translate>Guardar reporte</button></form></div>
 <div class="panel"><h2 data-translate>Reportes de averías</h2><div id="damages"></div></div></div></section>
 <section class="page" id="page-repuestos" hidden>
-<div class="panel"><h2 data-translate>Buscador de repuestos</h2><p class="muted" data-translate>Busca piezas para un vehículo específico. Abre las tiendas para comparar precios y confirmar compatibilidad.</p>
-<form id="partsForm"><div class="fields"><div><label for="partVehicle" data-translate>Vehículo</label><select id="partVehicle" required></select></div><div><label for="partName" data-translate>Pieza o número de parte</label><input id="partName" placeholder="Ej.: Alternador" data-translate-placeholder required maxlength="100"></div></div><button class="btn" type="submit" data-translate>Buscar piezas</button></form><div id="partsResults" aria-live="polite"></div>
-<div class="note warning" data-translate>Estos botones abren búsquedas, no precios en vivo. Confirma VIN, año, motor y número de parte con el vendedor antes de comprar.</div></div>
-</section>
+<div class="panel">
+ <div class="parts-form-head">
+  <div><h2 data-translate>Buscador de repuestos</h2><p class="muted" data-translate>Encuentra tiendas para consultar repuestos con los datos de tu vehículo.</p></div>
+  <div class="parts-icon" aria-hidden="true">⚙</div>
+ </div>
+ <form id="partsForm">
+  <div class="fields">
+   <div><label for="partVehicle" data-translate>Vehículo</label><select id="partVehicle" required></select></div>
+   <div><label for="partName" data-translate>Pieza que necesitas</label><input id="partName" required maxlength="100" placeholder="Ej.: Wipers, alternador, frenos" data-translate-placeholder></div>
+   <div><label for="partNumber" data-translate>Número de parte (opcional)</label><input id="partNumber" maxlength="60" autocomplete="off" placeholder="Ej.: 12345-ABC" data-translate-placeholder></div>
+   <div><label for="partVin" data-translate>VIN (opcional; no se comparte con las tiendas)</label><input id="partVin" maxlength="17" autocomplete="off" autocapitalize="characters" placeholder="17 caracteres" data-translate-placeholder></div>
+  </div>
+  <p class="parts-helper" data-translate>La búsqueda usa modelo, año, motor y pieza. El VIN solo se usa como referencia en esta pantalla.</p>
+  <button class="btn" type="submit" data-translate>Buscar piezas</button>
+ </form>
+ <div id="partsResults" aria-live="polite"></div>
+ <div id="partsRegister" class="parts-register" hidden>
+  <h3 data-translate>¿Compraste el repuesto?</h3>
+  <p data-translate>Selecciona dónde lo compraste. Pasaremos la pieza y el vehículo a Gastos para que añadas el precio real.</p>
+  <div class="form-actions">
+   <div><label for="partSupplier" data-translate>Proveedor</label>
+    <select id="partSupplier"><option value="Amazon">Amazon</option><option value="AutoZone">AutoZone</option><option value="O'Reilly">O'Reilly</option><option value="RockAuto">RockAuto</option><option value="Otra tienda" data-translate>Otra tienda</option></select>
+   </div>
+   <button class="btn" id="registerPartExpense" type="button" data-translate>Registrar compra en gastos</button>
+  </div>
+ </div>
+</div></section>
 <section class="page" id="page-gastos" hidden><div class="cols">
-<div class="panel"><h2 data-translate>Registrar gasto</h2><form id="expenseForm">
+<div class="panel"><h2 data-translate>Registrar gasto</h2><div class="note" id="expenseSourceNote" role="status" hidden data-translate>Completa el precio real de la compra y luego presiona Guardar gasto.</div><form id="expenseForm">
 <div><label for="expenseVehicle" data-translate>Guagua</label><select id="expenseVehicle" required></select></div>
 <div><label for="expenseType" data-translate>Categoría</label><select id="expenseType"><option value="Mantenimiento" data-translate>Mantenimiento</option><option value="Repuesto" data-translate>Repuesto</option><option value="Alquiler" data-translate>Alquiler</option><option value="Otros" data-translate>Otros</option></select></div>
 <div><label for="expenseCost" data-translate>Cantidad en dólares</label><input id="expenseCost" type="number" min="0.01" step="0.01" required></div>
@@ -438,6 +495,38 @@ Object.assign(english, {
   "Ejemplo": "Sample",
   "No hay cambios para guardar.": "No changes to save.",
   "Datos de demostración almacenados solo en este navegador.": "Demo data is stored only in this browser."
+});
+
+Object.assign(english, {
+  "Encuentra tiendas para consultar repuestos con los datos de tu vehículo.": "Find stores to search for parts using your vehicle information.",
+  "Pieza que necesitas": "Part you need",
+  "Ej.: Wipers, alternador, frenos": "E.g. Wipers, alternator, brakes",
+  "Número de parte (opcional)": "Part number (optional)",
+  "Ej.: 12345-ABC": "E.g. 12345-ABC",
+  "VIN (opcional; no se comparte con las tiendas)": "VIN (optional; not shared with stores)",
+  "17 caracteres": "17 characters",
+  "La búsqueda usa modelo, año, motor y pieza. El VIN solo se usa como referencia en esta pantalla.": "Search uses the vehicle's model, year, engine, and part. VIN is used only as a reference on this screen.",
+  "¿Compraste el repuesto?": "Did you buy the part?",
+  "Selecciona dónde lo compraste. Pasaremos la pieza y el vehículo a Gastos para que añadas el precio real.": "Select where you bought it. We'll copy the part and vehicle to Expenses so you can enter the actual amount.",
+  "Proveedor": "Supplier",
+  "Otra tienda": "Other store",
+  "Registrar compra en gastos": "Log purchase in expenses",
+  "Completa el precio real de la compra y luego presiona Guardar gasto.": "Enter the actual price paid, then select Save expense.",
+  "Búsqueda lista": "Search ready",
+  "Vehículo seleccionado": "Selected vehicle",
+  "Número de parte": "Part number",
+  "VIN registrado (final {ending})": "VIN entered (ending {ending})",
+  "Término de búsqueda": "Search term",
+  "Consultar en tiendas": "Search stores",
+  "Consultar resultados": "View search results",
+  "Se abrirá una búsqueda externa. Los resultados y precios no se consultan en vivo.": "This opens an external search. Results and prices are not retrieved live.",
+  "Compatibilidad no verificada": "Compatibility not verified",
+  "Las tiendas deben confirmar que la pieza corresponde a tu vehículo. Comprueba VIN, número de parte y especificaciones antes de comprar.": "The store must confirm that the part fits your vehicle. Check VIN, part number, and specifications before buying.",
+  "Introduce un VIN válido de 17 caracteres (sin I, O ni Q), o déjalo en blanco.": "Enter a valid 17-character VIN (without I, O, or Q), or leave it blank.",
+  "Escribe la pieza que necesitas.": "Enter the part you need.",
+  "Selecciona un vehículo antes de buscar.": "Select a vehicle before searching.",
+  "Busca una pieza antes de registrar una compra.": "Search for a part before logging a purchase.",
+  "Repuesto: {part}": "Part: {part}"
 });
 
 function detectLanguage() {
@@ -650,7 +739,57 @@ function removeVehicle(id) {
  renderFlota();
  alert(translate("Vehículo y registros asociados eliminados de esta demostración."));
 }
-function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown(); }
+
+let partsSearch=null;
+const shopList=[
+ {name:"Amazon",initial:"A",build:q=>"https://www.amazon.com/s?k="+encodeURIComponent(q)},
+ {name:"AutoZone",initial:"AZ",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)},
+ {name:"O'Reilly",initial:"O",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)},
+ {name:"RockAuto",initial:"RA",build:q=>"https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)}
+];
+function normalizedPart(part){
+ const key=part.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+ const aliases={
+ "wipers":"windshield wiper blades","wiper":"windshield wiper blades",
+ "limpiaparabrisas":"windshield wiper blades","plumillas":"windshield wiper blades","escobillas":"windshield wiper blades",
+ "frenos":"brake pads","pastillas de freno":"brake pads",
+ "alternador":"alternator","bateria":"car battery","filtro de aire":"air filter"
+ };
+ return Object.hasOwn(aliases,key)?aliases[key]:part.trim();
+}
+function resetPartsSearch(){
+ partsSearch=null;
+ $("partsResults").replaceChildren();
+ $("partsRegister").hidden=true;
+}
+function renderPartsSearch(){
+ const target=$("partsResults");
+ const search=partsSearch,v=search&&getV(search.vehicleId);
+ if(!search||!v){resetPartsSearch();return;}
+ const normalized=normalizedPart(search.part);
+ const query=[v.year,v.name,v.engine,normalized,search.partNumber].filter(Boolean).join(" ");
+ const mask=search.vin?translate("VIN registrado (final {ending})",{ending:search.vin.slice(-4)}):"";
+ const tags=[v.id,v.engine,search.partNumber?translate("Número de parte")+": "+search.partNumber:"",mask].filter(Boolean);
+ const links=shopList.map(shop=>
+  '<a class="parts-shop-card" target="_blank" rel="noopener noreferrer" href="'+escaped(shop.build(query))+'" aria-label="'+escaped(shop.name)+': '+escaped(translate("Consultar resultados"))+'">'+
+   '<span class="parts-shop-mark" aria-hidden="true">'+escaped(shop.initial)+'</span>'+
+   '<span class="parts-shop-name"><strong>'+escaped(shop.name)+'</strong><small>'+escaped(translate("Consultar resultados"))+'</small></span>'+
+   '<span class="parts-shop-out" aria-hidden="true">↗</span></a>'
+ ).join("");
+ target.innerHTML='<div class="parts-result">'+
+  '<div class="parts-summary"><span class="parts-summary-kicker">'+escaped(translate("Búsqueda lista"))+'</span>'+
+  '<h3>'+escaped(search.part)+'</h3>'+
+  '<p>'+escaped(translate("Vehículo seleccionado"))+': '+escaped(v.year)+' '+escaped(v.name)+'</p>'+
+  '<div class="parts-tags">'+tags.map(x=>'<span class="parts-tag">'+escaped(x)+'</span>').join("")+'</div>'+
+  (normalized!==search.part?'<p>'+escaped(translate("Término de búsqueda"))+': '+escaped(normalized)+'</p>':"")+'</div>'+
+  '<h3 class="parts-subtitle">'+escaped(translate("Consultar en tiendas"))+'</h3>'+
+  '<div class="parts-shop-grid">'+links+'</div>'+
+  '<p class="parts-helper" style="margin-top:10px">'+escaped(translate("Se abrirá una búsqueda externa. Los resultados y precios no se consultan en vivo."))+'</p>'+
+  '<div class="parts-compat"><span aria-hidden="true">⚠</span><div><strong>'+escaped(translate("Compatibilidad no verificada"))+'</strong>'+
+  '<p>'+escaped(translate("Las tiendas deben confirmar que la pieza corresponde a tu vehículo. Comprueba VIN, número de parte y especificaciones antes de comprar."))+'</p></div></div></div>';
+ $("partsRegister").hidden=false;
+}
+function render() { options();maintenanceValues();renderFlota();renderDamages();renderExpenses();renderMaintenance();renderExpenseBreakdown();renderPartsSearch(); }
 function nextVehicleId() {
  let number=101;
  while(getV("F-"+number)) number++;
@@ -675,12 +814,13 @@ function showVehicleForm(id) {
 function hideVehicleForm(){editingVehicleId=null;$("vehicleForm").hidden=true;$("vehicleForm").reset();}
 
 
-document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
- document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",tab===t));
- document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+tab.dataset.page);
+function openPage(page){
+ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));
+ document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!=="page-"+page);
  const titles={flota:"Resumen de la flota",averias:"Reportes de averías",repuestos:"Búsqueda de repuestos",gastos:"Control de gastos"};
- $("pageTitle").textContent=translate(titles[tab.dataset.page]);
-}));
+ $("pageTitle").textContent=translate(titles[page]);
+}
+document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>openPage(tab.dataset.page)));
 $("newVehicle").addEventListener("click",()=>showVehicleForm());
 $("cancelVehicle").addEventListener("click",hideVehicleForm);
 $("vehicleForm").addEventListener("submit",e=>{
@@ -760,24 +900,44 @@ $("damages").addEventListener("click",e=>{
  const status=$("damage-status-"+index);if(status)status.focus();
 });
 $("partsForm").addEventListener("submit",e=>{
- e.preventDefault();const v=getV($("partVehicle").value),part=$("partName").value.trim();if(!v||!part)return;
- const q=v.year+" "+v.name+" "+v.engine+" "+part;
- const urls=[["Amazon","https://www.amazon.com/s?k="+encodeURIComponent(q)],["AutoZone","https://www.google.com/search?q="+encodeURIComponent("site:autozone.com "+q)],["O'Reilly","https://www.google.com/search?q="+encodeURIComponent("site:oreillyauto.com "+q)],["RockAuto","https://www.google.com/search?q="+encodeURIComponent("site:rockauto.com "+q)]];
- const target=$("partsResults");target.replaceChildren();const p=document.createElement("p");
- p.textContent=translate("Búsquedas preparadas para {query}",{query:q});target.append(p);
- urls.forEach(([name,url])=>{const a=document.createElement("a");a.className="shop";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=translate("Buscar en {store} ↗",{store:name});target.append(a);});
+ e.preventDefault();
+ const v=getV($("partVehicle").value),part=$("partName").value.trim();
+ const partNumber=$("partNumber").value.trim();
+ const vin=$("partVin").value.trim().toUpperCase();
+ if(!v)return alert(translate("Selecciona un vehículo antes de buscar."));
+ if(!part)return alert(translate("Escribe la pieza que necesitas."));
+ if(vin&&!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin))return alert(translate("Introduce un VIN válido de 17 caracteres (sin I, O ni Q), o déjalo en blanco."));
+ partsSearch={vehicleId:v.id,part,partNumber,vin};
+ $("partSupplier").value="Amazon";
+ renderPartsSearch();
+ $("partsResults").scrollIntoView({behavior:"smooth",block:"nearest"});
+});
+["input","change"].forEach(eventName=>$("partsForm").addEventListener(eventName,()=>{if(partsSearch)resetPartsSearch();}));
+$("registerPartExpense").addEventListener("click",()=>{
+ if(!partsSearch||!getV(partsSearch.vehicleId))return alert(translate("Busca una pieza antes de registrar una compra."));
+ const supplier=$("partSupplier").value;
+ const desc=[translate("Repuesto: {part}",{part:partsSearch.part}),partsSearch.partNumber?"#"+partsSearch.partNumber:"",supplier].filter(Boolean).join(" · ").slice(0,150);
+ openPage("gastos");
+ $("expenseVehicle").value=partsSearch.vehicleId;
+ $("expenseType").value="Repuesto";
+ $("expenseDetails").value=desc;
+ $("expenseCost").value="";
+ $("expenseSourceNote").hidden=false;
+ $("expenseCost").focus();
+ $("expenseForm").scrollIntoView({behavior:"smooth",block:"center"});
 });
 $("expenseForm").addEventListener("submit",e=>{
  e.preventDefault();const cost=Number($("expenseCost").value),details=$("expenseDetails").value.trim();
  if(!Number.isFinite(cost)||cost<=0||!details)return;
  const expense={id:Date.now(),vehicle:$("expenseVehicle").value,type:$("expenseType").value,cost,details,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,expenses:[...data.expenses,expense]}))return;
+ $("expenseSourceNote").hidden=true;
  e.target.reset();alert(translate("Gasto registrado en la demo."));
 });
 $("resetDemo").addEventListener("click",()=>{
  if(!confirm(translate("¿Restaurar todos los datos ficticios?")))return;
  if(!commit(copy(initial)))return;
- selectedVehicleId=null;hideVehicleForm();renderFlota();$("partsResults").replaceChildren();
+ selectedVehicleId=null;hideVehicleForm();resetPartsSearch();$("expenseSourceNote").hidden=true;renderFlota();
 });
 localizePage();
 render();
