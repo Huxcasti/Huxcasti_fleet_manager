@@ -70,7 +70,9 @@ function attachBranding(van, scene) {
   for (const side of [-1, 1]) {
    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.85, 1.09), sideMaterial);
    mesh.rotation.y = side * Math.PI / 2;
-   mesh.position.set(side * 1.078, 1.87, -1.15);
+   // Move the complete side mark 15 cm lower, leaving clear space above
+   // the Prime arrowhead and below the van's roof / upper panel seam.
+   mesh.position.set(side * 1.078, 1.72, -1.15);
    mesh.renderOrder = 2;
    van.add(mesh);
    decals.push(mesh);
