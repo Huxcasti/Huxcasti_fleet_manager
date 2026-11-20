@@ -19,11 +19,12 @@ El modelo y la marca Amazon/Prime se utilizan como demostración visual, sin imp
 ### Nota
 Las fichas todavía incluyen vehículos Ford Transit, Ram ProMaster y Mercedes Sprinter; hasta que haya modelos propios para cada una, el visor usa la Ford Transit como referencia visual. Los datos del sistema siguen guardándose en el navegador.
 
-## Rivian EDV · visor dentro de Inspeccionar guagua en 3D
-En **Flota → Ver ficha → Inspeccionar guagua en 3D**, el usuario puede cambiar entre **Ford Transit 2020** y **Rivian EDV (Amazon)** mediante el selector **Modelo 3D**.
+## Rivian EDV Amazon Prime · modelo 3D gratuito y local
+En **Flota → Ver ficha → Inspeccionar guagua en 3D** se puede seleccionar entre Ford Transit y Rivian EDV. La unidad ilustrativa `RIV-DEMO` de la lista inicia con Rivian automáticamente.
 
-- Ford Transit: visor Three.js con selección de puntos de avería y gráficos Prime de la demostración.
-- Rivian EDV: visor 3D oficial embebido de Sketchfab, obra de [ROH3D](https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624). Permite rotar y acercar, pero no marcar averías en este visor externo.
-- El selector se abre automáticamente en Rivian cuando el nombre del vehículo contiene `Rivian` o `EDV`; en los demás, inicia en Ford Transit.
-- El embed no puede repintarse ni recibir los logos Prime directamente desde este código. Se necesita un archivo editable del modelo para equiparar la personalización de la Ford Transit.
-- No se añadieron unidades ficticias ni se modificaron los registros de flota.
+- **Rivian:** el módulo local `rivian3d.js` construye una recreación original con Three.js, inspirada en la silueta de la Rivian EDV. Incluye carrocería azul oscuro, distintivos estilo Amazon Prime, banda negra del frontal, faros redondos y puerta trasera azul.
+- **Costo de modelo:** $0. No descarga ni depende de un modelo comercial de terceros ni del iframe de Sketchfab.
+- **Interacción:** girar, acercar, marcar puntos de avería y consultar marcadores previamente guardados. Las coordenadas se guardan como parte de los registros de la demo del navegador.
+- **Ford Transit:** sigue utilizando `assets/ford-transit-prime.glb` y el inspector de daños original.
+- **Limitación:** Rivian es una **interpretación estilizada**, no un archivo CAD ni una réplica exacta autorizada por el fabricante. La marca Amazon se muestra con fines de demostración, sin afiliación.
+- No cambia la información real de vehículos guardada en el navegador. `RIV-DEMO` es una unidad de demostración, no un activo de WILX.
