@@ -19,11 +19,11 @@ El modelo y la marca Amazon/Prime se utilizan como demostración visual, sin imp
 ### Nota
 Las fichas todavía incluyen vehículos Ford Transit, Ram ProMaster y Mercedes Sprinter; hasta que haya modelos propios para cada una, el visor usa la Ford Transit como referencia visual. Los datos del sistema siguen guardándose en el navegador.
 
-## Rivian EDV · vista 3D
-La sección **Flota** incluye una vista interactiva de la Rivian Amazon Electric Delivery Van mediante el reproductor oficial de Sketchfab (compatible con móvil y escritorio).
+## Rivian EDV · visor dentro de Inspeccionar guagua en 3D
+En **Flota → Ver ficha → Inspeccionar guagua en 3D**, el usuario puede cambiar entre **Ford Transit 2020** y **Rivian EDV (Amazon)** mediante el selector **Modelo 3D**.
 
-- Modelo: [Low Poly Car – Rivians Amazon Electric Van](https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624)
-- Autor: [ROH3D](https://sketchfab.com/roh3d)
-- Integración: iframe oficial; el archivo 3D y sus texturas se sirven desde Sketchfab.
-- **Importante:** el modelo embebido es azul y **no contiene calcomanías de Prime**. La interfaz usa una presentación inspirada en los colores de la flota de Amazon, pero no modifica el modelo de terceros. Para personalizar la carrocería y agregar sus logos en la superficie del vehículo, se necesita un archivo 3D editable y una licencia que permita la modificación.
-- La vista es ilustrativa y no añade una unidad ficticia al inventario ni altera el inspector de daños Ford Transit.
+- Ford Transit: visor Three.js con selección de puntos de avería y gráficos Prime de la demostración.
+- Rivian EDV: visor 3D oficial embebido de Sketchfab, obra de [ROH3D](https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624). Permite rotar y acercar, pero no marcar averías en este visor externo.
+- El selector se abre automáticamente en Rivian cuando el nombre del vehículo contiene `Rivian` o `EDV`; en los demás, inicia en Ford Transit.
+- El embed no puede repintarse ni recibir los logos Prime directamente desde este código. Se necesita un archivo editable del modelo para equiparar la personalización de la Ford Transit.
+- No se añadieron unidades ficticias ni se modificaron los registros de flota.
