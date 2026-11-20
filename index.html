@@ -289,6 +289,19 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 
 .vehicle-3d-entry{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px;padding:13px;border:1px solid #b8d8f3;border-radius:10px;background:#eff7ff}
 .vehicle-3d-entry .btn{min-height:38px}.vehicle-3d-entry small{font-size:12px;color:#4b6483}
+/* Rivian EDV: branded 3D showcase. The Sketchfab scene remains creator-controlled. */
+.rivian-preview{margin:18px 0 20px;overflow:hidden;border-radius:16px;border:1px solid #3178a9;background:#152a43;color:#fff;box-shadow:0 15px 34px #183d5b21}
+.rivian-preview-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:19px 22px;background:linear-gradient(125deg,#162a42 5%,#245b80 65%,#126f9e 100%)}
+.rivian-preview-kicker{display:block;margin-bottom:5px;color:#8be1ff;font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+.rivian-preview h2{margin:0;color:#fff;font-size:clamp(21px,3vw,27px);letter-spacing:-.025em}
+.rivian-preview-top p{margin:7px 0 0;max-width:700px;color:#d7efff;font-size:13px;line-height:1.55}
+.rivian-preview-tag{padding:8px 11px;border:1px solid #9deaff77;border-radius:999px;background:#a4eafa18;color:#dff8ff;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.05em}
+.rivian-preview-frame{height:clamp(315px,48vw,550px);background:radial-gradient(circle at center,#355773 0%,#11283e 100%)}
+.rivian-preview-frame iframe{display:block;width:100%;height:100%;border:0}
+.rivian-preview-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 18px;border-top:1px solid #4e7b9b;background:#13283e;color:#bcd5e9;font-size:12px;line-height:1.5}
+.rivian-preview-bottom a{color:#8be1ff;text-decoration:underline;text-underline-offset:3px;font-weight:700}
+@media(max-width:600px){.rivian-preview{border-radius:12px}.rivian-preview-top{padding:16px}.rivian-preview-frame{height:360px}.rivian-preview-bottom{padding:11px 15px}}
+
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 </head>
@@ -311,6 +324,30 @@ footer { display: flex; align-items: center; justify-content: space-between; fle
 <header class="header"><div><div class="label" data-translate>Panel de flotas</div><h1 id="pageTitle" data-translate>Resumen de la flota</h1><div class="muted" data-translate>Mantenimiento, averías, piezas y gastos en un mismo lugar.</div></div><span class="demo" data-translate>DEMO — Datos ficticios</span></header>
 <section class="page" id="page-flota">
 <div class="stats" id="stats"></div>
+<div class="rivian-preview" aria-labelledby="rivianPreviewTitle">
+  <div class="rivian-preview-top">
+    <div>
+      <span class="rivian-preview-kicker">WILX · AMAZON EDV · 3D</span>
+      <h2 id="rivianPreviewTitle">Rivian Electric Delivery Van</h2>
+      <p data-translate>Explora la nueva guagua eléctrica de entregas en 3D. Puedes girarla y acercarla desde el celular o la computadora.</p>
+    </div>
+    <span class="rivian-preview-tag" data-translate>MODELO ELÉCTRICO</span>
+  </div>
+  <div class="rivian-preview-frame">
+    <iframe
+      title="Rivian Amazon Electric Delivery Van - modelo 3D interactivo"
+      src="https://sketchfab.com/models/597d70bfcf7c43bba31ffffc51290624/embed?autostart=0&amp;ui_theme=dark"
+      loading="lazy"
+      allow="autoplay; fullscreen; xr-spatial-tracking"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+  </div>
+  <div class="rivian-preview-bottom">
+    <span data-translate>Vista ilustrativa: el modelo original no incluye los gráficos Prime. No es una unidad registrada de la flota.</span>
+    <a href="https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624" target="_blank" rel="noopener noreferrer">3D: ROH3D · Sketchfab</a>
+  </div>
+</div>
 <div class="cols">
 <div class="panel" id="fleetListPanel">
  <h2 data-translate>Mis vehículos</h2>
@@ -664,6 +701,12 @@ Object.assign(english, {
  "Próximo aceite: {mileage} mi": "Next oil change: {mileage} mi",
  "Este cambio usará {mileage} mi como millaje del servicio.": "The oil change will be logged at {mileage} mi.",
  "Último aceite registrado: {mileage} mi": "Last oil change recorded at {mileage} mi"
+});
+
+Object.assign(english,{
+ "Explora la nueva guagua eléctrica de entregas en 3D. Puedes girarla y acercarla desde el celular o la computadora.":"Explore the new electric delivery van in 3D. Rotate and zoom on your phone or computer.",
+ "MODELO ELÉCTRICO":"ELECTRIC MODEL",
+ "Vista ilustrativa: el modelo original no incluye los gráficos Prime. No es una unidad registrada de la flota.":"Illustrative view: the original model does not include Prime decals. This is not a registered fleet vehicle."
 });
 
 function detectLanguage() {
