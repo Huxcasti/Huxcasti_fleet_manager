@@ -70,29 +70,61 @@ async function loadSelectedModel(id){
   $("inspectorView").disabled=true;
   $("inspectorReport").disabled=true;
   const rivian=$("inspectorModel").value==="rivian";
-  $("inspectorActions").hidden=rivian;
+  $("inspectorActions").hidden=false;
   $("inspectorSubtitle").textContent=vehicle.name+" · "+vehicle.year+" — "+
     (rivian ? t("Rivian EDV de referencia","Reference Rivian EDV") :
       t("Modelo Ford Transit 2020 de referencia; puede diferir de esta unidad",
         "Reference 2020 Ford Transit model; may differ from this unit"));
   if(rivian){
     $("inspectorHelp").textContent=t(
-      "Gira el modelo con un dedo y utiliza dos dedos para acercar. Este visor externo permite explorar la Rivian, pero no marcar daños directamente.",
-      "Drag to rotate and pinch to zoom. This external viewer lets you explore the Rivian but cannot place damage markers directly.");
-    $("inspectorCredit").innerHTML=
-      'Rivian Amazon Electric Delivery Van · 3D: <a href="https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624" target="_blank" rel="noopener noreferrer">ROH3D (Sketchfab)</a> · '+
-      t("El color y las texturas del modelo son los originales del autor.",
-        "Model colors and textures are the artist’s originals.");
-    $("inspectorStatus").textContent=t(
-      "Rivian 3D lista para explorar. Para marcar daños y ponerle logos Prime sobre la carrocería se necesita el archivo 3D editable.",
-      "Rivian 3D ready to explore. An editable 3D file is needed for damage markers and Prime branding on the body.");
-    const iframe=document.createElement("iframe");
-    iframe.title="Rivian Amazon Electric Delivery Van · 3D · ROH3D";
-    iframe.src="https://sketchfab.com/models/597d70bfcf7c43bba31ffffc51290624/embed?autostart=0&ui_theme=dark";
-    iframe.setAttribute("allow","autoplay; fullscreen; xr-spatial-tracking");
-    iframe.setAttribute("allowfullscreen","");
-    iframe.referrerPolicy="strict-origin-when-cross-origin";
-    stage.appendChild(iframe);
+      "Gira con un dedo, pellizca para acercar o utiliza Marcar daño para indicar una avería sobre la Rivian.",
+      "Drag to rotate, pinch to zoom, or use Mark damage to select a spot on the Rivian.");
+    $("inspectorCredit").textContent=t(
+      "Recreación 3D original inspirada en Rivian EDV y en los colores Amazon Prime. Modelo ilustrativo no oficial, sin compra de archivos.",
+      "Original 3D recreation inspired by Rivian EDV and Amazon Prime colors. Unofficial illustrative model, no purchased files.");
+    $("inspectorStatus").textContent=t("Preparando Rivian 3D personalizada…","Preparing customized Rivian 3D…");
+    try{
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      const {mountRivian3D}=await import("./rivian3d.js?v=prime-rivian-original-v1");
+      if(token!==loadToken)return;
+      const renderTarget=document.createElement("div");
+      renderTarget.className="inspector-render-target";
+      stage.replaceChildren(renderTarget);
+      const loadedViewer=mountRivian3D(renderTarget,{
+        language:api.language,
+        damages:api.getData().damages.filter(d=>d.vehicle===id),
+        onMarker(damage){
+          if(token!==loadToken)return;
+          $("inspectorDetail").hidden=false;
+          $("inspectorDetail").textContent=t("Avería: ","Damage: ")+damage.part+" · "+
+            (damage.repaired?t("Arreglado","Fixed"):t("Pendiente","Pending"))+
+            (damage.details?" · "+damage.details:"");
+        },
+        onPick(pin){
+          if(token!==loadToken)return;
+          api.pendingPin={vehicleId:id,pin};
+          $("inspectorSelection").textContent=t(
+            "Ubicación seleccionada. Presiona Registrar avería aquí para continuar.",
+            "Location selected. Select Report damage here to continue.");
+          $("inspectorSelection").hidden=false;
+          $("inspectorStatus").textContent=t("Punto seleccionado","Point selected");
+          $("inspectorReport").disabled=false;
+        }
+      });
+      if(token!==loadToken){loadedViewer.destroy();return;}
+      viewer=loadedViewer;
+      $("inspectorMark").disabled=false;
+      $("inspectorView").disabled=false;
+      $("inspectorStatus").textContent=t(
+        "Rivian Prime 3D lista. Puedes girarla, acercarla y marcar averías. Recreación ilustrativa.",
+        "Rivian Prime 3D ready. Rotate, zoom and mark damage. Illustrative recreation.");
+    }catch(error){
+      if(token!==loadToken)return;
+      console.error("Rivian 3D loading failed",error);
+      $("inspectorStatus").textContent=t(
+        "No se pudo abrir la Rivian 3D en este dispositivo. Verifica que el navegador admita WebGL.",
+        "Rivian 3D could not start. Check that the browser supports WebGL.");
+    }
     return;
   }
   $("inspectorHelp").textContent=t(
