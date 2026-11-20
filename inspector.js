@@ -13,7 +13,7 @@ styles.textContent =
 ".inspector-status{color:#315578;font-size:13px;line-height:1.5;margin:8px 18px 12px}.inspector-detail{margin:9px 18px;padding:12px;background:#eaf5ff;border:1px solid #c2ddf5;border-radius:10px;line-height:1.5;font-size:13px;overflow-wrap:anywhere}"+
 ".inspector-help{color:#506d8d;font-size:12px;line-height:1.5;margin:10px 18px 10px}"+
 ".inspector-credit{color:#5b748c;font-size:11px;margin:0 18px 17px;line-height:1.45}.inspector-credit a{color:#1b589e;text-decoration:underline}"+
-".inspector-head-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.inspector-model-label{display:flex;flex-direction:column;gap:3px;color:#d6ecff;font-size:11px;font-weight:700}.inspector-model-label select{min-height:35px;max-width:190px;border:1px solid #9bb9d7;border-radius:8px;padding:6px 9px;background:#f1f8ff;color:#142e4d;font-size:13px;font-weight:700}.inspector-canvas iframe{display:block;width:100%;height:100%;border:0}.inspector-actions[hidden]{display:none!important}"+
+".inspector-head-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.inspector-model-label{display:flex;flex-direction:column;gap:3px;color:#d6ecff;font-size:11px;font-weight:700}.inspector-model-label select{min-height:35px;max-width:190px;border:1px solid #9bb9d7;border-radius:8px;padding:6px 9px;background:#f1f8ff;color:#142e4d;font-size:13px;font-weight:700}.inspector-canvas iframe{display:block;width:100%;height:100%;border:0}.inspector-render-target{width:100%;height:100%}.inspector-actions[hidden]{display:none!important}"+
 "@media(max-width:600px){.inspector-overlay{padding:0;align-items:stretch}.inspector-dialog{width:100%;max-height:100dvh;height:100dvh;border-radius:0;display:flex;flex-direction:column}.inspector-head{padding:11px 14px;gap:8px;flex-wrap:wrap}.inspector-head h2{font-size:17px}.inspector-head-controls{width:100%;justify-content:space-between}.inspector-model-label{flex:1}.inspector-model-label select{max-width:none;width:100%}.inspector-canvas{height:auto;min-height:260px;flex:1 1 47dvh}.inspector-actions{padding:10px 12px 3px}.inspector-detail{margin:8px 12px}.inspector-status,.inspector-help{margin:8px 12px}}";
 document.head.append(styles);
 
@@ -106,7 +106,11 @@ async function loadSelectedModel(id){
     await new Promise(resolve=>requestAnimationFrame(resolve));
     const {mountVan3D}=await import("./realvan.js?v=prime-word-spacing-v9");
     if(token!==loadToken)return;
-    const loadedViewer=await mountVan3D(stage,{
+    const renderTarget=document.createElement("div");
+    renderTarget.className="inspector-render-target";
+    if(token!==loadToken)return;
+    stage.replaceChildren(renderTarget);
+    const loadedViewer=await mountVan3D(renderTarget,{
       language:api.language,
       damages:api.getData().damages.filter(d=>d.vehicle===id),
       onMarker(damage){
