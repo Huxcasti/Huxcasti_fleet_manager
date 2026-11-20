@@ -648,6 +648,13 @@ Object.assign(english, {
 });
 
 Object.assign(english, {
+ "Eléctrico": "Electric",
+ "Eléctrica": "Electric",
+ "Millaje sin registrar": "Mileage not recorded",
+ "Sin registrar": "Not recorded",
+ "No requiere cambio de aceite": "No engine oil change required",
+ "No aplica (vehículo eléctrico)": "Not applicable (electric vehicle)",
+ "Vehículo eléctrico: no requiere cambios de aceite del motor.": "Electric vehicle: engine oil changes are not required.",
  "Solo escribe las millas que marca la guagua ahora mismo.": "Just enter the mileage currently shown on the van's odometer.",
  "¿Qué guagua vas a actualizar?": "Which van are you updating?",
  "¿Cuántas millas marca ahora?": "What does the odometer read now?",
@@ -844,15 +851,17 @@ function renderFlota() {
      count:filtered.length,total:vehicles.length,filter:translate(fleetFilterNames[fleetFilter]||"Guaguas")
     }) : "";
  $("vehicleList").innerHTML=filtered.length ? filtered.map(v=>{
-  const mileageLeft=left(v);
-  const badge=mileageLeft<0?"danger":mileageLeft<=500?"warn":"";
-  const service=mileageLeft<0?"Vencido":mileageLeft<=500?"Próximo":"Al día";
+  const electric=isElectric(v);
+  const mileageLeft=electric?null:left(v);
+  const badge=electric?"":mileageLeft<0?"danger":mileageLeft<=500?"warn":"";
+  const service=electric?"Eléctrica":mileageLeft<0?"Vencido":mileageLeft<=500?"Próximo":"Al día";
+  const mileageText=v.demo&&v.mileageRecorded!==true?translate("Millaje sin registrar"):translate("{mileage} millas",{mileage:commas(v.miles)});
   const expanded=selectedVehicleId===v.id;
   return '<div class="vehicle'+(expanded?" expanded":"")+'"><div><strong>'+escaped(v.id)+' · '+escaped(v.name)+'</strong>'+
-   '<p>'+escaped(v.year)+' · '+escaped(v.engine)+' · '+escaped(translate(statusOf(v.id)))+'</p>'+
-   '<p>'+escaped(translate("{mileage} millas",{mileage:commas(v.miles)}))+'</p></div>'+
+   '<p>'+escaped(v.year)+' · '+escaped(translate(v.engine))+' · '+escaped(translate(statusOf(v.id)))+(v.demo?' · DEMO 3D':'')+'</p>'+
+   '<p>'+escaped(mileageText)+'</p></div>'+
    '<div class="end"><span class="pill '+badge+'">'+escaped(translate(service))+'</span>'+
-   '<p>'+escaped(translate("Aceite: {mileage} mi",{mileage:commas(v.due)}))+'</p>'+
+   '<p>'+escaped(electric?translate("No requiere cambio de aceite"):translate("Aceite: {mileage} mi",{mileage:commas(v.due)}))+'</p>'+
    '<div class="vehicle-actions"><button class="btn secondary" type="button" id="vehicle-details-btn-'+escaped(v.id)+'" data-detail="'+escaped(v.id)+'" aria-expanded="'+expanded+'" aria-controls="vehicle-inline-'+escaped(v.id)+'">'+translate(expanded?"Ocultar ficha":"Ver ficha")+'</button>'+
    '<button class="btn secondary" type="button" data-vehicle-edit="'+escaped(v.id)+'">'+translate("Editar datos")+'</button>'+
    '<button class="btn secondary" type="button" data-vehicle="'+escaped(v.id)+'">'+translate("Actualizar millaje")+'</button>'+
@@ -943,14 +952,14 @@ function vehicleDetailsMarkup(v) {
  const pending=data.damages.filter(d=>d.vehicle===v.id&&d.repaired!==true).length;
  const cost=countAndCost(v.id);
  const last=data.maintenance.filter(m=>m.vehicle===v.id&&m.type==="Cambio de aceite").slice().reverse()[0];
- const lastOilText=last ? dateLabel(last.date)+' · '+commas(last.miles)+' mi' :
+ const lastOilText=isElectric(v)?translate("No aplica (vehículo eléctrico)"):last ? dateLabel(last.date)+' · '+commas(last.miles)+' mi' :
    Number.isSafeInteger(v.lastOil) ? translate("a las {mileage} mi",{mileage:commas(v.lastOil)}) :
    translate("Sin fecha de cambio registrada");
  return '<strong>'+escaped(translate("Ficha de vehículo"))+': '+escaped(v.id)+' · '+escaped(v.name)+' ('+escaped(v.year)+')</strong>'+
  '<div class="vehicle-info-grid">'+
  '<div><small>'+escaped(translate("Motor"))+'</small><strong>'+escaped(v.engine)+'</strong></div>'+
- '<div><small>'+escaped(translate("Millaje actual"))+'</small><strong>'+escaped(commas(v.miles))+' mi</strong></div>'+
- '<div><small>'+escaped(translate("Próximo aceite (millas)"))+'</small><strong>'+escaped(commas(v.due))+' mi</strong></div>'+
+ '<div><small>'+escaped(translate("Millaje actual"))+'</small><strong>'+escaped(v.demo&&v.mileageRecorded!==true?translate("Sin registrar"):commas(v.miles)+' mi')+'</strong></div>'+
+ '<div><small>'+escaped(translate("Próximo aceite (millas)"))+'</small><strong>'+escaped(isElectric(v)?translate("No aplica (vehículo eléctrico)"):commas(v.due)+' mi')+'</strong></div>'+
  '<div><small>'+escaped(translate("Averías pendientes"))+'</small><strong>'+pending+'</strong></div>'+
  '<div><small>'+escaped(translate("Total de gastos"))+'</small><strong>'+escaped(dollar(cost.total))+'</strong></div>'+
  '<div><small>'+escaped(translate("Último cambio de aceite"))+'</small><strong>'+
