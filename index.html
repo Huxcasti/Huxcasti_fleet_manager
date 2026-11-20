@@ -702,6 +702,7 @@ function localizePage() {
 const key="huxcasti-fleet-demo-1";
 const initial={
   vehicles:[
+  {id:"RIV-DEMO",name:"Rivian EDV (Amazon)",year:2025,engine:"Eléctrico",miles:0,due:0,interval:0,lastOil:null,electric:true,demo:true,mileageRecorded:false,condition:"Disponible"},
   {id:"F-101",name:"Ford Transit",year:2022,engine:"3.5L",miles:49550,due:50000,interval:5000,condition:"Disponible"},
   {id:"F-102",name:"Ram ProMaster",year:2021,engine:"3.6L",miles:42200,due:45000,interval:5000,condition:"Disponible"},
   {id:"F-103",name:"Mercedes Sprinter",year:2020,engine:"2.0L",miles:61020,due:61000,interval:7500,condition:"En reparación"},
@@ -713,7 +714,19 @@ const initial={
 };
 const copy=obj=>JSON.parse(JSON.stringify(obj));
 let data=copy(initial);
-try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&Array.isArray(saved.vehicles)&&Array.isArray(saved.damages)&&Array.isArray(saved.expenses)){data={...copy(initial),...saved,maintenance:Array.isArray(saved.maintenance)?saved.maintenance:[]};}}catch{}
+try {
+ const saved=JSON.parse(localStorage.getItem(key));
+ const hadSaved=!!(saved&&Array.isArray(saved.vehicles)&&Array.isArray(saved.damages)&&Array.isArray(saved.expenses));
+ if(hadSaved)data={...copy(initial),...saved,maintenance:Array.isArray(saved.maintenance)?saved.maintenance:[]};
+ const migrationKey="huxcasti-fleet-rivian-demo-added-v1";
+ if(!localStorage.getItem(migrationKey)){
+  if(hadSaved&&!data.vehicles.some(v=>v.id==="RIV-DEMO"||/rivian|edv/i.test(String(v.name||"")))){
+   data.vehicles.unshift(copy(initial.vehicles[0]));
+   localStorage.setItem(key,JSON.stringify(data));
+  }
+  localStorage.setItem(migrationKey,"1");
+ }
+}catch(error){console.warn("Demo vehicle initialization unavailable",error);}
 const $=id=>document.getElementById(id);
 const escaped=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const currencyFormat = new Intl.NumberFormat(locale, {style:"currency",currency:"USD"});
@@ -721,6 +734,7 @@ const mileageFormat = new Intl.NumberFormat(locale);
 const dollar = amount => currencyFormat.format(amount);
 const commas = mileage => mileageFormat.format(mileage);
 const getV=id=>data.vehicles.find(v=>v.id===id);
+const isElectric=v=>v?.electric===true||/el[eé]ctric|electric|battery/i.test(String(v?.engine||""));
 const left=v=>v.due-v.miles;
 const save = (state = data) => {
   try {
@@ -802,7 +816,7 @@ function matchesFleetFilter(v) {
  switch(fleetFilter){
   case "available": return statusOf(v.id)==="Disponible";
   case "repair": return statusOf(v.id)==="En reparación";
-  case "oil": return left(v)<=500;
+  case "oil": return !isElectric(v)&&left(v)<=500;
   default: return true;
  }
 }
@@ -815,7 +829,7 @@ const countAndCost = id => {
 };
 function renderFlota() {
  const vehicles=data.vehicles;
- const late=vehicles.filter(vehicle=>left(vehicle)<=500);
+ const late=vehicles.filter(vehicle=>!isElectric(vehicle)&&left(vehicle)<=500);
  const available=vehicles.filter(v=>statusOf(v.id)==="Disponible").length;
  const stats=[["all","Guaguas",vehicles.length],["available","Disponibles",available],["repair","En reparación",vehicles.length-available],["oil","Aceite próximo",late.length]];
  $("stats").innerHTML=stats.map(([id,label,count])=>
