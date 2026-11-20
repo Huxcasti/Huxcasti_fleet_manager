@@ -767,16 +767,17 @@ function setOilForm(open){
 function maintenanceValues(){
  const v=getV($("maintVehicle").value);
  $("miles").value=v?String(v.miles):"";
- $("interval").value=v?String(v.interval):"";
+ $("interval").value=v&&!isElectric(v)?String(v.interval):"";
  $("miles").min=v?String(v.miles):"0";
- $("oilChanged").disabled=!v;
- $("toggleOil").disabled=!v;
+ $("oilChanged").disabled=!v||isElectric(v);
+ $("toggleOil").disabled=!v||isElectric(v);
  setOilForm(false);
  renderMileageSummary();
 }
 function renderMileageSummary(){
  const v=getV($("maintVehicle").value),target=$("mileageSummary");
  if(!v){target.textContent=translate("No hay vehículos para actualizar.");return;}
+ if(isElectric(v)){target.textContent=translate("Vehículo eléctrico: no requiere cambios de aceite del motor.");return;}
  const remaining=left(v);
  const status=remaining<0?
    translate("El aceite está atrasado por {mileage} millas.",{mileage:commas(Math.abs(remaining))}):
@@ -790,7 +791,7 @@ function renderMileageSummary(){
 }
 function renderOilServicePreview(){
  const v=getV($("maintVehicle").value),preview=$("oilServicePreview");
- if(!v){preview.textContent="";return;}
+ if(!v||isElectric(v)){preview.textContent="";return;}
  const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
  const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
  if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<v.miles||
@@ -1159,13 +1160,13 @@ $("maintenanceForm").addEventListener("submit",e=>{
  if(miles<v.miles)return alert(translate("No puedes guardar un millaje menor que el ya registrado ({mileage} mi).",{mileage:commas(v.miles)}));
  if(miles===v.miles)return alert(translate("No hay cambios para guardar."));
  // Updating the odometer NEVER changes v.due or v.interval.
- const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles}:item);
+ const vehicles=data.vehicles.map(item=>item.id===v.id?{...item,miles,mileageRecorded:true}:item);
  const record={id:Date.now(),vehicle:v.id,type:"Millaje actualizado",miles,due:v.due,date:new Date().toISOString().slice(0,10)};
  if(!commit({...data,vehicles,maintenance:[...data.maintenance,record]}))return;
  alert(translate("Millaje guardado en la demostración."));
 });
 $("oilChanged").addEventListener("click",()=>{
- const v=getV($("maintVehicle").value);if(!v)return;
+ const v=getV($("maintVehicle").value);if(!v||isElectric(v))return;
  const milesText=$("miles").value.trim(),intervalText=$("interval").value.trim();
  const miles=Number(milesText),interval=Number(intervalText),due=miles+interval;
  if(!milesText||!intervalText||!Number.isSafeInteger(miles)||miles<0||
