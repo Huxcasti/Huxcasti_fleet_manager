@@ -19,12 +19,11 @@ El modelo y la marca Amazon/Prime se utilizan como demostración visual, sin imp
 ### Nota
 Las fichas todavía incluyen vehículos Ford Transit, Ram ProMaster y Mercedes Sprinter; hasta que haya modelos propios para cada una, el visor usa la Ford Transit como referencia visual. Los datos del sistema siguen guardándose en el navegador.
 
-## Rivian EDV Amazon Prime · modelo 3D gratuito y local
-En **Flota → Ver ficha → Inspeccionar guagua en 3D** se puede seleccionar entre Ford Transit y Rivian EDV. La unidad ilustrativa `RIV-DEMO` de la lista inicia con Rivian automáticamente.
+## Rivian EDV · modelo original de Sketchfab
+En **Flota → Ver ficha → Inspeccionar guagua en 3D** se puede seleccionar Ford Transit o Rivian EDV. La unidad `RIV-DEMO` de demostración inicia con la Rivian automáticamente.
 
-- **Rivian:** el módulo local `rivian3d.js` construye una recreación original con Three.js, inspirada en la silueta de la Rivian EDV. Incluye carrocería azul oscuro, distintivos estilo Amazon Prime, banda negra del frontal, faros redondos y puerta trasera azul.
-- **Costo de modelo:** $0. No descarga ni depende de un modelo comercial de terceros ni del iframe de Sketchfab.
-- **Interacción:** girar, acercar, marcar puntos de avería y consultar marcadores previamente guardados. Las coordenadas se guardan como parte de los registros de la demo del navegador.
-- **Ford Transit:** sigue utilizando `assets/ford-transit-prime.glb` y el inspector de daños original.
-- **Limitación:** Rivian es una **interpretación estilizada**, no un archivo CAD ni una réplica exacta autorizada por el fabricante. La marca Amazon se muestra con fines de demostración, sin afiliación.
-- No cambia la información real de vehículos guardada en el navegador. `RIV-DEMO` es una unidad de demostración, no un activo de WILX.
+- **Rivian:** visor original integrado desde [Low Poly Car – Rivians Amazon Electric Van, por ROH3D (Sketchfab)](https://sketchfab.com/3d-models/low-poly-car-rivians-amazon-electric-van-597d70bfcf7c43bba31ffffc51290624).
+- **Ford Transit:** visor Three.js original con selección de puntos y gráficos Prime.
+- El visor de Rivian permite girar y acercar, pero **no permite colocar marcadores de averías desde el iframe**.
+- La pintura y los logotipos del 3D de Sketchfab son los que publica su creador. Para convertirlo en una réplica Amazon Prime totalmente editable y detallada se necesita un modelo 3D modificable autorizado.
+- `RIV-DEMO` es solo una unidad ilustrativa de demostración.
